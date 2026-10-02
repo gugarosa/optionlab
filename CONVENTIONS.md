@@ -1,124 +1,98 @@
 # Conventions
 
-This file owns contributor policy. The [README](README.md) owns usage; [architecture](docs/architecture.md) describes
-how the implementation works. Tool instructions link here instead of maintaining competing rules.
+This file owns contributor policy. The [README](README.md) owns usage; [architecture](docs/architecture.md) owns
+implementation explanations. Agent instructions link to these sources instead of duplicating them.
 
-## Product boundaries
+## Product and structure
 
 - Preserve one manifest in, one self-contained HTML lab, and one choices file out.
-- Keep production code dependency-free, framework-agnostic JavaScript. No bundler, compile step, proxy or server.
-- Use development dependencies only for a demonstrated verification need. Keep them outside the published runtime.
-- Keep lockfile tarball URLs public and integrity-checked. Machine-specific registry mirrors and credentials must
-  not enter the committed lockfile. Development tools must support the Node 20/22 CI matrix.
-- Treat the manifest, choices schema, client API and frame messages as contracts. Change producers, consumers,
-  examples, tests and documentation together.
-- Make migrations canonical. Do not leave forwarding modules, alternate implementations or deprecated aliases.
+- Keep runtime JavaScript framework-agnostic and dependency-free. No compiler, bundler, proxy or server.
+- Development tools must justify their cost and support Node 20/22. Commit public, integrity-checked package URLs,
+  never machine-specific mirrors or credentials.
+- Change contracts and every producer, consumer, test, example and document together. Make migrations canonical;
+  do not retain forwarding modules, alternate implementations or deprecated aliases.
 
-## Ownership and structure
+| Owner                 | Responsibility                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `bin/`                | Arguments, dispatch, process exit and browser opening; delegates to `lib/`           |
+| `lib/`                | Manifest, build, check and scaffolding; imports Node APIs and direct sibling modules |
+| `lib/index.js`        | Deliberate public package entrypoint, not an internal import hub                     |
+| `shell/`              | Review UI, choices and frame lifecycle in one generated browser scope                |
+| `client/`             | Standalone, idempotent browser client; no imports or parent DOM access               |
+| `schema/`             | Editor contracts kept in agreement with validation and exports                       |
+| `skill/`              | The consuming agent's workflow, not contributor policy                               |
+| `examples/`, `media/` | Fictional demonstrations and original, reproducible screenshots                      |
+| `test/`               | Node contracts; browser workflows in `test/e2e/`, inputs in `test/fixtures/`         |
+| `docs/`               | Source-linked explanations, one subject per file                                     |
 
-| Owner          | Responsibility                                                | Dependency rule                                                               |
-| -------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `bin/`         | Arguments, command dispatch, process exit and browser opening | Calls `lib/`; does not own validation or rendering                            |
-| `lib/`         | Manifest loading, bundling, checking and scaffolding          | Node APIs and direct sibling modules                                          |
-| `lib/index.js` | The deliberate public package entrypoint                      | Re-exports supported APIs; internal code imports their defining modules       |
-| `shell/`       | Review UI, persisted choices and iframe lifecycle             | Browser APIs and the documented shell assembly order                          |
-| `client/`      | In-page choices, inspection and messages                      | Browser APIs only; no imports or parent DOM access                            |
-| `schema/`      | Editor-facing contracts                                       | Must agree with the hand-written validators and exports                       |
-| `skill/`       | The consuming agent's round workflow                          | Product instructions, not contributor policy                                  |
-| `examples/`    | Fictional, self-contained demonstrations                      | No private data, credentials or relative asset dependencies                   |
-| `test/`        | Node behavior and contract tests                              | Browser workflows belong in `test/e2e/`; fixtures stay under `test/fixtures/` |
-| `docs/`        | Durable implementation explanations                           | Each file owns one subject and links its code or schema                       |
-| `media/`       | Original README and review images                             | Generated by the documented capture command, never private screenshots        |
-
-Keep the tree flat until a real ownership boundary needs a directory. Do not introduce `src/`, workspace packages,
-generic `utils/` buckets or a configuration framework for this small tool. Name files for their responsibility:
-operation verbs such as `build.js`, singular concepts such as `state.js`, and real collections such as `frames.js`.
-Use lowercase kebab-case for new multiword files. Never add numbered replacements such as `build2.js`.
+Keep the tree flat until a real ownership boundary needs a directory. Do not add `src/`, workspaces, a generic
+`utils/` bucket or a configuration framework. Name files for their job: `build.js`, `state.js`, `frames.js`.
+Use lowercase kebab-case for new multiword files and retain standard tool filenames. Never add numbered replacements.
 
 ## JavaScript
 
-- Use ESM for Node modules, explicit `.js` relative imports and `node:` for built-ins. Keep imports at the top.
-- Import from the defining module. The external package entrypoint is the exception, not a pattern for new barrels.
-- Keep the standalone client an idempotent IIFE. Shell fragments share one generated IIFE, not browser globals.
-- Use `const` unless reassignment is necessary, `camelCase` for values/functions and `PascalCase` for types/classes.
-  Name protocol constants when the name explains a non-obvious value; do not extract every one-use literal.
-- Spell out domain names. Short counters and conventional coordinates are fine; avoid abbreviations that make the
-  reader reconstruct the value's meaning.
-- Add `// @ts-check` to JavaScript files. Use JSDoc for public parameters, return shapes and useful shared types.
-  Prefer inferred types and guards to `any`, unchecked casts, suppression directives or duplicate type declarations.
-- Separate preparation, validation, execution and cleanup with one blank line when the phases are substantial.
-  Prefer guard clauses to deep nesting. Split functions around a real contract, not an arbitrary line quota.
-- Prefer direct code. Extract a helper for reuse or a meaningful non-obvious contract, not to name a trivial expression.
-- Preserve formatting with [Prettier](.prettierrc.json): two spaces, double quotes, semicolons and its existing width.
-  Do not hand-align code or compress it to satisfy a line budget.
+- Use ESM, top-level imports, explicit `.js` relative paths and `node:` built-ins. Import from the defining module;
+  the public package entrypoint is the deliberate exception.
+- Keep the client an IIFE and shell fragments in their documented shared scope. Do not connect them through
+  implicit `window` properties or add module imports to the fragments.
+- Prefer `const`, `camelCase` values/functions and `PascalCase` types/classes. Use meaningful domain names;
+  short counters and conventional coordinates are fine.
+- Add `// @ts-check`. Use JSDoc for public signatures and useful shared types; prefer inference and guards to
+  `any`, unchecked casts, suppressions or duplicated types.
+- Use guard clauses and blank lines between substantial phases. Extract helpers for reuse or a meaningful contract,
+  not to name trivial expressions or satisfy arbitrary complexity quotas.
+- Name constants when their meaning or reuse warrants it. Do not duplicate absent-value sentinels with extra flags.
+- Let [Prettier](.prettierrc.json) own formatting. Do not hand-align or compress code to satisfy the roughly
+  3,500-line runtime target.
 
 ## Errors and lifecycle
 
-- Validate untrusted input at its boundary: manifests, imports, URLs, file contents and messages. Trust established
-  internal invariants rather than adding repeated defensive defaults.
-- Reject invalid data explicitly. A parse failure must not become an empty result or a successful-looking default.
-- Catch an error only to recover deliberately, add context with `cause`, report at an application boundary, or clean up.
-  Keep unexpected errors visible. Expected absence must be distinguished by its actual error code.
-- Error messages name the failing operation and relevant path, field or value. Keep the established path-style
-  validator messages and `prismal: <message>` CLI boundary; do not apply a second punctuation dialect mechanically.
-- Libraries return data or throw. Terminal output belongs to the CLI, apart from the checker's documented `log`
-  callback. Browser failures use the existing toast, frame-status or message channel.
-- Every timer, observer, watcher, frame and temporary resource has an owner and a cleanup path. Release load permits
-  once, ignore stale generations and preserve attached iframe contexts across unrelated UI updates.
-- Keep accessible controls, visible keyboard focus, editable-target shortcut guards, reduced motion and narrow layouts.
-  A shared primitive owns its variants; do not fork styling or behavior at individual call sites.
+- Validate external inputs once at their boundary; trust established internal invariants.
+- Reject invalid data explicitly. A parse failure must not become an empty result or successful-looking default.
+- Catch only to recover deliberately, add context with `cause`, report at an application boundary or clean up.
+  Distinguish expected absence by its error code and keep unexpected errors visible.
+- Name the failed operation and relevant field, path or value. Preserve path-style validation messages and the
+  `prismal: <message>` CLI boundary rather than imposing unrelated message conventions.
+- Libraries return or throw. Terminal output belongs to the CLI, except the checker's `log` callback.
+  Browser failures use the existing toast, frame-status or message channel.
+- Own and clean up timers, observers, watchers, frames and temporary resources. Release load permits once,
+  ignore stale generations and keep unchanged iframe contexts attached.
+- Preserve semantic controls, keyboard focus, editable-target shortcut guards, reduced motion and narrow layouts.
+  Shared primitives own their variants; avoid per-call-site forks.
 
-## Comments and API documentation
+## Comments and documentation
 
-- Explain why only when naming, types and structure cannot. Prefer a one-line comment above the relevant statement.
-- Do not add banners, narrated code, commented-out implementations or process diaries. Keep prose comments within
-  three lines. License notices, source attribution and JSDoc type declarations are not prose-comment quotas.
-- Public API JSDoc states the operation and any surprising contract. Do not repeat obvious defaults or maintain
-  essays on private helpers. Type-only annotations remain useful in JavaScript, including private code.
-- Put durable rationale in the owning architecture document. Put change-specific motivation in the commit or PR.
+- Explain non-obvious intent, not the next statement. Prefer a one-line comment; prose blocks stop at three lines.
+  Preserve license notices, source attribution and useful JSDoc types.
+- No banners, commented-out code, process diaries or redundant private-helper essays.
+  Public API JSDoc states the operation and surprising semantics. Durable rationale belongs in the owning document;
+  change-specific motivation belongs in the commit or PR.
+- Use plain sentence case, imperative headings and short, factual paragraphs. Avoid hype and first-person narration.
+- Keep the README under 200 lines and the skill under 120. Put installation before runnable usage, preserve important
+  limits and link to detail rather than repeating policy, setup steps or schemas.
+- Use one H1, a clear heading hierarchy and fenced code with language labels. No manual table of contents.
+  Use tables for comparisons/contracts and `<details>` only for optional material.
+- Keep prose within 120 columns; complete URLs, tables and fenced code are exempt.
+  Use Markdown links/images with relative local paths and meaningful alt text, not raw HTML links or image tags.
+- No emoji headings, decorative badges or ornamental diagrams. Keep session files, private reference material,
+  credentials and machine-local paths out of tracked documentation and examples.
+- A `docs/` file starts with a title, blank line, status, blank line and one-sentence purpose.
+  Use `Status: Living`, `Status: Snapshot (YYYY-MM)` or `Status: Superseded by <relative-link>`.
+- Anchor implementation claims to source files, symbols, configuration keys or schemas.
+  Treat those references as callers and update them with their owner.
 
-## Tests and verification
+## Tests and change workflow
 
-- Test observable behavior with `node:test` and `node:assert/strict`. Use flat, descriptive behavior tests rather than
-  class hierarchies, private implementation snapshots or one assertion per test.
-- Pair a changed public path with its meaningful failure/rejection path. Assert the contract, not merely that it ran.
-- Reuse fixtures and the existing browser helpers. Isolate storage, ports and temporary directories, and register
-  cleanup immediately. Use owned frame messages when a browser automation engine cannot inspect the child context.
-- Avoid explanatory assertion strings that repeat the test name. Preserve useful measured context in parameterized
-  cases and timing/geometry failures.
-- Run `npm run verify` for JavaScript/Markdown lint, types, formatting, unit tests and contract guards.
-  Run `npm run verify:browser` for changes to rendering, framing, the client, serialization or browser checking.
-- Use the smallest focused test while iterating; run the applicable verification commands before publishing a PR.
-  Never weaken a rule, skip a failing test or introduce a fallback just to make CI green.
-- Keep the package allowlist, schema agreement and dependency direction covered. The runtime target is roughly
-  3,500 readable lines, not a reason to minify or drop behavior.
-
-## Documentation and Markdown
-
-- Write for the next reader's task, in plain sentence case. Use imperative headings, short paragraphs and specific
-  nouns. State capabilities and constraints; avoid hype, a changelog feed or first-person work narration.
-- Keep the README under 200 lines: product/example first, installation before a runnable quick start, essential usage,
-  links to durable documentation and verification commands. Keep the agent skill under 120 lines.
-- Keep one H1 and a sensible heading hierarchy. Let GitHub provide the outline; do not add a manual table of contents.
-  Use tables for genuine comparisons or contracts, not every paragraph.
-- Markdown prose stays within 120 columns. Preserve complete URLs; fenced code and tables are exempt.
-  Fences name their language. Links and images use relative repository paths when local and meaningful alt text.
-- Use Markdown links, not raw HTML links or image tags, so the offline link check covers them. Use `<details>` only
-  when it hides optional detail, not the primary task. No emoji headings, decorative badges or ornamental diagrams.
-- A document under `docs/` starts with its title, `Status: Living`, a blank line and one sentence describing its job.
-  Frozen investigations use `Status: Snapshot (YYYY-MM)` instead. Superseded documents point to their replacement.
-- Anchor implementation claims to a source file, public symbol, configuration key or schema. Treat these references
-  as callers: update them in the same change that moves or changes their owner.
-- Do not duplicate policy, installation steps or schemas across documents. Link to the owner. Do not commit
-  session ledgers, machine-local paths, scratch reports or copied private reference material.
-- Formatting, Markdown structure, same-file fragments and relative document/image links are checked automatically.
-  Accuracy, useful naming, abstraction size and coupled edits remain review responsibilities.
-
-## Change workflow
-
-Check the branch, working tree and PR state before editing or pushing. Use a topic branch; use an isolated worktree
-when another session shares the checkout. Never overwrite unrelated changes or push follow-ups to a merged PR branch.
-
-Keep commits coherent, document necessary deviations and include the relevant behavior/verification evidence in
-the PR. Fetch current `main`, resolve conflicts and verify the PR's state before handing it back. Never merge,
-publish to npm or create a release without an explicit request.
+- Use flat, descriptive `node:test` behavior tests and `node:assert/strict`. Cover meaningful success and rejection
+  paths, not private snapshots or one test per assertion.
+- Reuse fixtures and browser helpers. Isolate storage, ports and temporary directories; register cleanup immediately.
+  Test through owned messages when automation cannot inspect a child frame.
+- Omit assertion strings that repeat test names; keep useful case identifiers and measured timing/geometry context.
+- Use focused tests while iterating, then `npm run verify`. Run `npm run verify:browser` for browser, framing,
+  client, serialization or checker changes. Keep package boundaries, schema agreement and dependency direction covered.
+- Never weaken a rule or skip a failure to make CI green. Linters check structure; review checks accuracy, naming,
+  useful abstractions and coupled behavior.
+- Check branch, worktree and PR state before editing/pushing. Use a topic branch and an isolated worktree when
+  sessions share a checkout. Never overwrite others' changes or push follow-ups to a merged PR branch.
+- Keep commits coherent. Record deviations and verification evidence in the PR, sync current `main` and confirm
+  merge status before handoff. Never merge, publish to npm or create a release without an explicit request.

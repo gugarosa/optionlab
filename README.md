@@ -2,28 +2,15 @@
 
 # Prismal
 
-**Real design options. Your app. One file of choices.**
+**Review live UI alternatives and export your design decisions.**
 
-Your coding agent builds alternatives for a header, a plan table, a first impression.
-You open one HTML file, try the real pages, compare beside the current design, like,
-pick and leave notes. Export one JSON file. The agent makes your picks canonical.
-
-<details>
-<summary>Why a live lab?</summary>
-
-**Why not Storybook?** It presents isolated components. Prismal frames your real pages and records a choice.
-
-**Why not screenshots?** Frames are interactive and responsive. Screenshots verify options, not replace them.
-
-**Does it work with my framework?** Yes. A variant is a CSS attribute or one function call.
-
-**Do I ship the client?** No. It is development-only and removed when the rounds end.
-
-</details>
+Your coding agent builds options in your app or self-contained HTML pages. You open one lab,
+compare the options, like, pick and leave notes. The agent reads your exported JSON and applies the decisions.
 
 ## Installation
 
-This is an **unpublished preview**. Node 20+ is enough to build; the reviewer installs nothing.
+Prismal is an **unpublished preview**. Install from GitHub, not the npm registry.
+Authors need Node 20+ and Git; reviewers need only a browser.
 
 ```sh
 git clone https://github.com/gugarosa/prismal.git
@@ -32,17 +19,18 @@ cd prismal
 
 ## Quick start
 
+Build and open the fictional Lumen example; no dependency installation or server is needed:
+
 ```sh
 node bin/prismal.js build examples/lumen/prismal.json --open
 ```
 
-Lumen is a fictional note-taking product with three decisions,
-13 options, questions, vocabulary, an inspector and a four-step journey. Everything works offline.
-After building, `lab.html` can move anywhere and open by double-clicking.
+The example includes decisions, questions, vocabulary, element inspection and a journey.
+Its generated `examples/lumen/lab.html` can move anywhere and open by double-clicking.
 
 ### Use in your app
 
-Install this preview explicitly, then give your agent the [skill](skill/SKILL.md):
+From your application's project root:
 
 ```sh
 npm install --save-dev github:gugarosa/prismal
@@ -50,22 +38,14 @@ npx prismal init
 npx prismal skill
 ```
 
-Ask the agent to propose several real options per decision, implement them in your app,
-and describe the round in `prismal/prismal.json`. Now is unchanged; A-C are close
-variations, D-E explore different answers. Use fewer when the decision is small.
+`init` creates `prismal/prismal.json`, not the variants themselves. Set its `base` to your dev server,
+add the client as shown below, and implement the options before building.
+The [agent skill](skill/SKILL.md) explains the round workflow.
 
-```sh
-npx prismal build --open
-npx prismal check --shots prismal/shots
-```
+## Write variants
 
-Do not hand off a broken round. Check every option, then send the reviewer `lab.html`.
-Live URLs need your existing dev server; local HTML sources do not.
-
-## Write a variant
-
-Copy `node_modules/prismal/client/prismal.js` into your app's public directory.
-Load it **before app scripts, in development only**:
+For plain HTML, copy `node_modules/prismal/client/prismal.js` into the app's public directory.
+Include it before app scripts, in development only:
 
 ```html
 <script src="/prismal.js"></script>
@@ -76,7 +56,7 @@ Load it **before app scripts, in development only**:
 </style>
 ```
 
-React, Vue and Svelte need no adapter. In the development entry:
+For a bundled app, use its **browser-only development entrypoint** instead:
 
 ```js
 import "prismal/client";
@@ -84,98 +64,108 @@ const header = window.prismal?.choice("header") ?? "now";
 const menu = window.prismal?.state.menu ?? "closed";
 ```
 
-`prismal.is("header", "b")` is a boolean shortcut. Outside a lab frame the client
-only resolves choices; it does not add inspection UI or intercept events.
-Use `?prismal.header=b&prismal.state.menu=open` to inspect a variant in a normal tab.
+No framework adapter is needed. `prismal.is("header", "b")` is a boolean shortcut.
+For a normal browser tab, use `?prismal.header=b&prismal.state.menu=open`.
+Outside a lab frame, the client resolves choices without inspection or event interception.
+Remove the client and unused variants when the decisions are applied.
 
-## One manifest
+## Define a round
 
-See [Lumen's complete manifest](examples/lumen/prismal.json) and the
-[editor schema](schema/prismal.schema.json). Validation reports the exact field to fix.
+Use [the example manifest](examples/lumen/prismal.json) and [editor schema](schema/prismal.schema.json).
+Errors identify the field to fix.
 
-| Field                     | Purpose                                                                     |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `title`, `round`, `about` | Name, positive round number and a short introduction                        |
-| `base`                    | An absolute HTTP(S) base for live relative URLs                             |
-| `devices`                 | Named `[width, height]` pairs; laptop 1440x900 and phone 390x844 by default |
-| `defaults`                | Settled decision-to-option mappings from earlier rounds                     |
-| `decisions`               | Independent questions, each with views and 1-6 proposals besides `now`      |
-| `views`                   | Caption, device, exactly one `url` or `file`, optional `focus` and `state`  |
-| `options`                 | ID, name, idea; optional close/different kind, why and tradeoff             |
-| `questions`, `words`      | Answers and vocabulary choices, optionally grouped                          |
-| `elements`, `inspect`     | Named selectors and routes for point-and-click feedback                     |
-| `journeys`                | Ordered routes, target selectors, descriptions and questions                |
+| Field                 | Purpose                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `title`, `round`      | Required name and positive round number                                                    |
+| `about`               | Optional introduction                                                                      |
+| `decisions`           | Questions, views and 1-6 proposals besides `now`; use `[]` for review-only rounds          |
+| `base`, `devices`     | Live URL base and viewport sizes; defaults are laptop 1440x900 and phone 390x844           |
+| `defaults`            | Settled decision-to-option mappings from earlier rounds                                    |
+| `views`               | Caption, device, exactly one `url` or `file`, optional `focus` selector and `state` object |
+| `options`             | ID, name, optional idea, close/different kind, why and tradeoff                            |
+| `questions`, `words`  | Grouped answers and vocabulary review                                                      |
+| `elements`, `inspect` | Semantic element definitions and review routes                                             |
+| `journeys`            | Ordered routes, target selectors and review questions                                      |
 
-IDs use lowercase letters, numbers and hyphens and are unique in their list.
-The lab adds `now` when omitted. Optional pages appear only when defined.
-Review-only rounds may have no decisions. Without explicit inspect routes, registered
-elements can be reviewed using the first view of each decision.
+IDs use lowercase letters, numbers and hyphens and are unique within their list. The lab adds `now` when omitted.
+Optional review pages appear when configured. Give elements meaningful names and descriptions, not just selectors.
 
-Local sources use `"file": "mockups/hero-{option}.html#/pricing"`. The build deduplicates
-files, injects the client and a `base` element, and embeds their contents as `srcdoc`.
-**Inline assets or use absolute URLs.** Relative assets cannot travel with the lab.
-For an offline round, inline everything. Use hash routing: `pushState`/`replaceState`
-are not supported inside `srcdoc`. Local previews are sandboxed; scripts and forms work,
-but parent access, popups, downloads and browser storage are intentionally unavailable.
+| Source                                            | Requirements                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `"url": "/pricing"`                               | A running dev server at `base`, the client installed, and a page that permits framing    |
+| `"file": "mockups/header-{option}.html#/pricing"` | Self-contained HTML; Prismal expands the option, inlines the file and injects the client |
 
-Live pages are not rewritten or proxied. They must include the client, permit framing,
-and allow its development-only styles. `window.name` carries choices before app scripts
-run and across in-frame navigation; query parameters are the debug channel.
-Precedence is name, query, then `now`. Frames combine defaults, your picks, and the active option.
+Live URLs must be reachable from the reviewer's browser; `localhost` refers to that device.
+File sources use hash routing, not the History API. Inline assets for offline use; absolute URLs require network
+access. Relative asset paths do not travel with the lab. File previews are sandboxed: scripts and forms work,
+but browser storage, popups, downloads and parent DOM access are unavailable.
+Use trusted development pages and handle the generated HTML as application data.
 
-## Review and hand back
+## Review and export
 
-The rail tracks progress. Decision tabs offer Like, Pick, Focus/Full page and Beside Now.
-Inspect selects registered elements, then explicit `data-prismal-name` labels, then readable
-role/name fallbacks. Previous/Next walks instances without triggering the page's actions.
-Journeys highlight each target at laptop or phone size.
+Build after implementing the variants. Install Playwright only when using the checker:
 
-Changes autosave under `prismal:<title>:r<round>`. Export
-`prismal-choices-r<round>.json`; import can restore it and warns about a different title or round.
-Storage availability varies for files and private browsing: **export before handing off**.
-Reset round has an inline confirmation.
+```sh
+npx prismal build --open
+npm install --save-dev playwright
+npx playwright install chromium
+npx prismal check --shots prismal/shots
+```
 
-| Keys         | Action                              |
-| ------------ | ----------------------------------- |
-| Up / Down    | Previous / next page                |
-| Left / Right | Previous / next option              |
-| P / L        | Pick / like                         |
-| B / F        | Beside Now / focus or full page     |
-| I / [ / Esc  | Inspect / toggle navigation / close |
+Try each option at laptop and phone size. Compare beside Now, like useful ideas, pick one option per decision
+and add notes. Questions, words, element feedback and journey verdicts join the same export.
 
-Shortcuts do not run while typing. Every page has a shareable hash, such as `#/d/header/b`.
+Inspect supports clicking elements, an inventory and Previous/Next across instances.
+Read its [current limitations](docs/architecture.md#inspect-limitations) before relying on hover or route tracking.
 
-The [choices schema](schema/choices.schema.json) records picks, likes, notes, question
-answers, words, element feedback and journey verdicts. `pick: null` is undecided;
-`pick: "now"` means keep current. Element `index` distinguishes repeated instances.
-Picks are decisions, likes inform refinement, and notes are requirements. The agent
-applies settled picks, carries unresolved ones into the next round, then removes the
-client and all variant scaffolding.
+Export `prismal-choices-r<round>.json` and hand it to your agent. The [choices schema](schema/choices.schema.json)
+defines the contract: `pick: null` is undecided; `pick: "now"` keeps current. Likes inform refinement; notes are requirements.
+
+Autosave uses `prismal:<title>:r<round>`. Import restores matching entries and warns about title/round differences.
+File and private-browsing storage vary, so export before closing or handing off. Reset requires confirmation.
+
+| Keys         | Action                                             |
+| ------------ | -------------------------------------------------- |
+| Up / Down    | Previous / next page                               |
+| Left / Right | Previous / next option                             |
+| P / L        | Pick / like                                        |
+| B / F        | Beside Now / focus or full page                    |
+| I / [ / Esc  | Open or toggle Inspect / toggle navigation / close |
+
+Shortcuts pause while typing. Page hashes such as `#/d/header/b` preserve the current view on reload.
 
 ## Commands and API
 
-| Command                                         | Result                                                     |
-| ----------------------------------------------- | ---------------------------------------------------------- |
-| `init [dir]`                                    | Starter manifest and a lab ignore rule; default `prismal/` |
-| `build [manifest] [-o file] [--watch] [--open]` | One HTML file, beside the manifest by default              |
-| `check [manifest] [--shots dir]`                | Browser verification and optional PNGs                     |
-| `skill [dir]`                                   | Copy the agent skill; default `.github/skills/prismal`     |
+| Command                                         | Result                                                 |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| `init [dir]`                                    | Starter manifest and ignore rule; default `prismal/`   |
+| `build [manifest] [-o file] [--watch] [--open]` | One HTML file beside the manifest by default           |
+| `check [manifest] [--shots dir]`                | Browser verification and optional PNGs                 |
+| `skill [dir]`                                   | Copy the agent skill; default `.github/skills/prismal` |
 
-Lookup checks `prismal/prismal.json`, then `./prismal.json`. Init and skill never
-overwrite existing files. For Claude Code, use `skill .claude/skills/prismal`;
-for a user-level Copilot install, use `skill ~/.copilot/skills/prismal`.
+Manifest lookup checks `prismal/prismal.json`, then `./prismal.json`. Init and skill do not overwrite existing files.
+`--watch` rebuilds changed inputs; reload the browser to see the new HTML.
+For Claude Code, use `skill .claude/skills/prismal`; for user-level Copilot, use `skill ~/.copilot/skills/prismal`.
 
-Check needs optional Playwright: `npm i -D playwright && npx playwright install chromium`.
-It resolves your project's Playwright first, then this package's; `playwright-core`
-can use installed Chrome. It checks runtime/network errors, readiness, empty pages,
-phone overflow, missing selectors and byte-identical-to-Now screenshots, then visits
-every lab page. Missing registered elements warn. Failures exit 1.
-Shots are named `<decision>-<option>-<view-number>.png`.
+Check builds first and fails on page/network errors, missing readiness, empty pages, horizontal overflow,
+missing focus/journey targets and screenshots byte-identical to Now. It warns when an element matches no configured
+inspect route. Failures exit 1. Shots are named `<decision>-<option>-<view-number>.png`.
+Use stable data: exact screenshot equality is not a visual-similarity or usability assessment.
 
-The ESM API exports `build(path?, { output? })`, `check(path?, { shots?, log? })`
-and `loadManifest(path?)`. Build returns output, normalized manifest, bundled data,
-dependencies and counts. Check returns failures, warnings, frame count and problems.
-Load returns `{ manifest, path }`. There are **zero runtime dependencies**.
+The checker resolves your project's Playwright before the package's. `playwright-core` can use installed Chrome.
+Build, init and skill have no runtime dependencies.
+
+The ESM API exports `build(path?, { output? })`, `check(path?, { shots?, log? })` and `loadManifest(path?)`.
+Build returns the output path, normalized manifest, bundled data, dependencies and counts.
+Check returns failures, warnings, frame count and problems. Load returns `{ manifest, path }`.
+
+<details>
+<summary>How is this different from Storybook or screenshots?</summary>
+
+Storybook presents isolated components. Prismal frames real pages and records decisions.
+Screenshots help verify a round; the reviewer interacts with live frames.
+
+</details>
 
 ## Documentation
 
@@ -193,5 +183,4 @@ npm run verify:browser
 ```
 
 See [AGENTS.md](AGENTS.md) for focused tests, browser selection and screenshot refreshes.
-
-MIT. Lucide icons use ISC; Feather-derived paths retain their MIT notice in `shell/icons.js`.
+MIT; Lucide/Feather notices are retained in `shell/icons.js`.

@@ -2,89 +2,79 @@
 
 Status: Living
 
-Use this reference when changing bundling, frame lifecycles or the persisted review contract.
+Use this reference when changing bundling, frame lifecycles or persisted review contracts.
 
-## Build one portable artifact
+## Build
 
-[The CLI](../bin/prismal.js) delegates to the functions behind [the public package API](../lib/index.js).
-The ownership and dependency rules live in [CONVENTIONS.md](../CONVENTIONS.md); usage lives in the [README](../README.md).
+[The CLI](../bin/prismal.js) delegates to the functions behind [the package API](../lib/index.js).
+[`loadManifest()`](../lib/manifest.js) validates against the rules in the [manifest schema](../schema/prismal.schema.json)
+and adds device/current-option defaults. [Conventions](../CONVENTIONS.md) own the dependency rules.
 
-[`loadManifest()`](../lib/manifest.js) validates and normalizes one manifest. Its hand-written validation agrees with
-the [manifest schema](../schema/prismal.schema.json), including the implicit current option and device defaults.
+[`build()`](../lib/build.js) resolves local files relative to the manifest, expands `{option}`, deduplicates contents
+and injects the client before app scripts. Hashes select routes without duplicating files.
+URL sources are resolved by the shell, not rewritten or proxied.
 
-[`build()`](../lib/build.js) resolves local source files relative to the manifest, expands `{option}`, deduplicates
-file contents and injects the client before application scripts. A file's hash remains a route, not a second copy
-of its contents. URL sources are resolved at review time and are not rewritten or proxied.
+`SHELL_ASSETS` in `lib/build.js` assembles [the HTML template](../shell/lab.html), inline CSS, JSON data and one IIFE.
+The JavaScript order is `icons.js`, `state.js`, `frames.js`, `pages.js`, `main.js` under `shell/`.
+These fragments share lexical scope. TypeScript checks cross-file reads/writes; ESLint checks local bindings and
+syntax. Review `const`/`let` across all fragments.
 
-The CLI retains directory watchers across rebuilds and reconciles subscriptions when source dependencies change.
-In watch mode, the build summary is printed only after subscriptions are ready for the next edit.
+JSON escapes `<` and line separators. Local HTML is assigned through `iframe.srcdoc`, not an HTML attribute.
+Directory watchers stay active across rebuilds; the CLI reconciles dependencies before reporting completion.
+Watch writes the artifact but does not reload an open browser.
 
-The generated [HTML template](../shell/lab.html) contains inline CSS, JSON data and one classic-script IIFE.
-`SHELL_ASSETS` in `lib/build.js` owns the JavaScript assembly order:
+## Client and messages
 
-1. `shell/icons.js` supplies licensed SVG paths.
-2. `shell/state.js` owns manifest access, persistence, import and export.
-3. `shell/frames.js` owns source frames and their lifecycle.
-4. `shell/pages.js` constructs the review surfaces.
-5. `shell/main.js` binds navigation, input and keyboard actions.
+[`client/prismal.js`](../client/prismal.js) installs `window.prismal` once. JSON in the iframe's `name` carries
+choices and state before app scripts run. Name values override debug query parameters; unset choices resolve to `now`.
+`frameChoices()` in [shell state](../shell/state.js) combines defaults, current picks and the option under review.
 
-These are fragments of one lexical scope, not separate browser modules. The no-emit type check checks that shared
-scope together, including cross-file reads and writes. ESLint checks each fragment's local bindings and syntax.
-Global binding checks belong to TypeScript; a `const`/`let` review must consider writes in every fragment.
-Do not add module imports or rely on implicit properties of `window` to connect fragments.
+File routes become `location.hash`; an injected `about:srcdoc` base keeps hash links inside the source page.
+Local frames allow scripts/forms with opaque sandbox origins. Live frames retain the app's origin.
+Messages carry `prismal: 1`; the shell checks the owned window and expected origin, and the client checks its parent.
+The client never reads the parent DOM. Only trusted development sources belong in a lab.
 
-The data block escapes `<` and JavaScript line separators. Local pages are assigned through `iframe.srcdoc`,
-never interpolated into an HTML attribute. Local files must be self-contained to remain portable.
+## Frames
 
-## Carry choices before the app starts
+[Frame management](../shell/frames.js) sets names before navigation and lazy-loads previews, at most two at a time.
+A replacement retains the old frame until ready or the three-second visual fallback.
+Eight seconds without readiness produces a recovery card.
 
-[`client/prismal.js`](../client/prismal.js) installs `window.prismal` once. The frame's JSON `name` supplies
-choices and state synchronously, before application code runs. Query parameters are the debugging channel.
-The precedence is frame name, query, then `now`.
+Disposal clears timers, removes message ownership and releases a load permit once. Stale generations cannot replace
+newer frames. `aria-busy` represents the pending generation, not the retained old frame.
 
-`frameChoices()` in [shell state](../shell/state.js) combines settled defaults, current picks and the option under
-review. File routes travel in the frame name and become `location.hash`. The injected `about:srcdoc` base keeps
-hash navigation inside the source page.
+The [page patcher](../shell/pages.js) preserves attached iframe nodes; detaching one resets its browsing context.
+The client measures after layout, load and fonts, suppresses size changes below two pixels and caps height at 30,000.
+Laptop views scale to their column; full phone views scroll within the device viewport. Focus crops use target rectangles.
 
-Local frames permit scripts and forms but have opaque sandbox origins. Live URL frames retain their app origin.
-The shell checks message markers, owned source windows and the expected origin. The client accepts control
-messages only from its parent; it never reads the parent's DOM.
+## Choices
 
-## Own loading and replacement
+[Shell state](../shell/state.js) owns autosave, import and export. Storage is keyed by title and round.
+Import validates before replacing state and resolves records against the manifest; title/round mismatches warn.
+Export follows the [choices schema](../schema/choices.schema.json) and adds a timestamp.
 
-[Frame management](../shell/frames.js) creates frames detached, sets their names before navigation and limits loading
-to two visible or nearby frames. A replacement leaves the previous frame attached until readiness, with a
-three-second visual fallback and an eight-second connection failure.
+Null means undecided; `now` means keep current. Element feedback uses name, route and instance index;
+journey feedback uses journey and one-based step. Notes, words and answers share the same export.
 
-Disposal clears timers, removes message ownership and releases a load permit once. Late messages cannot replace
-a newer generation. `aria-busy` describes the pending generation rather than the retained old image.
+## Inspect limitations
 
-The page patcher in [page rendering](../shell/pages.js) keeps unchanged frame nodes attached. Removing and reinserting
-an iframe restarts its browsing context, even when the DOM object is reused.
+- In [`measure()`](../client/prismal.js), outline repainting is gated by a focus selector.
+  Full-page Inspect has no focus target, so hover feedback does not repaint reliably. Clicking still selects an element.
+- [`inspectMessage()`](../shell/pages.js) receives frame routes but does not synchronize the route picker after
+  in-frame navigation. Select the intended route explicitly; feedback records carry the actual frame route.
+- Previous/Next cycles instances of the selected name, not the catalog. Inventory entries have no review-completion
+  markers, and visibility is document-wide rather than scoped to an active drawer.
 
-The client reports page size after layout, load and fonts, ignores sub-two-pixel size changes and caps height at
-30,000 pixels. Laptop views scale their source layout; full phone views retain a scrollable device viewport.
-Focus uses the client's target rectangle. Inspection overlays do not handle pointer events.
+## Verification
 
-## Persist one review contract
+[`check()`](../lib/check.js) builds first, then opens a file-based harness using the same frame names, sources,
+sandbox and dimensions. It visits decision/option/views, configured inspect routes and journey steps, followed by
+the generated lab's navigation routes.
 
-[Shell state](../shell/state.js) owns the canonical choices object. Autosave is keyed by title and round.
-Import validates before replacing state, resolves entries against the current manifest and reports a mismatched
-title or round. Export produces the [choices schema](../schema/choices.schema.json) with an export timestamp.
+Screenshot comparison checks byte equality with Now, not visual similarity. Stable data and manual interaction
+checks remain necessary. Element absence warnings run only when explicit inspect routes are configured.
 
-Keep null distinct from a current-design pick. Element feedback is identified by name, route and instance index;
-journey feedback is identified by journey and one-based step. Notes, words and question answers are part of the
-same export, not side documents.
-
-## Verify the same browser contract
-
-[`check()`](../lib/check.js) builds first, then uses a file-based browser harness with the same frame names, sources,
-sandbox and dimensions. It examines every decision/option/view, inspect route and journey step, then visits the
-generated lab's actual navigation routes.
-
-Playwright is resolved only when checking: the host project's installation first, then the package's.
-`playwright-core` can use installed Chrome. Neither is required to build, scaffold or install the skill.
-
-[Node tests](../test/) cover validation, serialization, command behavior, structure and package contents.
-[Browser tests](../test/e2e/) cover user actions, real messages, lifecycle thresholds and broken-source fixtures.
-The [CI workflow](../.github/workflows/ci.yml) uses the same verification commands as local development.
+Resolution tries host-project Playwright, package Playwright, then `playwright-core` with installed Chrome.
+These optional tools are loaded only by check. [Node tests](../test/) cover contracts and packaging;
+[browser tests](../test/e2e/) cover interactions and broken sources. [CI](../.github/workflows/ci.yml)
+uses the same verification commands as local development.

@@ -1,71 +1,67 @@
 ---
 name: prismal
-description: Let the user choose between real design options. Build alternatives per UI decision in the user's own app, present one live single-file lab where they compare, like, pick and note, then apply the exported prismal-choices JSON. Use when a UI change has more than one reasonable answer, when the user asks for design options, a design lab, alternatives, or to choose between designs, or hands back a prismal-choices file.
+description: Present real UI alternatives in a single-file design lab, let the user compare, like, pick and note, then apply their exported choices. Use for design options, a design lab, alternatives, choosing between designs, or a prismal-choices JSON handoff.
 ---
 
 # Prismal
 
-You propose. The user decides in the lab. You apply.
+Build the options. The user decides. Apply the choices.
+
+## Prerequisites
+
+Prismal is not published to npm. In the user's app, install it with
+`npm install --save-dev github:gugarosa/prismal` before running `npx prismal`.
+Authors need Node 20+; reviewers install nothing. Use trusted development pages and keep private data out of public artifacts.
 
 ## 1. Plan the round
 
-- Pick 3-9 decisions the user can judge independently: a header, a table, an empty state, a section's copy.
-- Give each one a question, such as "How should pricing compare plans?".
-- Round 1 is broad. Later rounds refine only decisions that remain open.
-- Work in the user's real app, not a demo inside the lab. Use self-contained HTML only when a mockup is appropriate.
+- Pick 3-9 independent decisions and give each one a question.
+- Begin broadly; later rounds refine only open decisions.
+- Work in the real app. Use self-contained HTML when a mockup is appropriate.
+- Propose Now plus five: A-C are close variations, D-E are different. Use fewer when appropriate, with at least two proposals.
 
-## 2. Build real options
+## 2. Implement the options
 
-- Now plus five: A, B and C are close variations; D and E are clearly different. Use fewer when the space is small,
-  but at least two proposals.
-- Give every option the same care, data, route and state. Never build a straw man.
-- Include `prismal/client` before application scripts, in development only.
-- Switch with CSS `html[data-prismal-header="b"] ...` or JS `window.prismal.choice("header")`.
-- Keep variants in clearly marked places that are easy to delete.
-- Use a view's `state` to expose open menus or first-run states through `window.prismal.state`.
-- Keep `now` unchanged. Include laptop and phone views for each decision.
+- Give each option the same care, data, route and state. Keep `now` unchanged; never build a straw man.
+- Load `prismal/client` before app scripts, in the browser's development entrypoint only.
+- Switch with `html[data-prismal-header="b"]` or `window.prismal.choice("header")`.
+- Keep variants easy to remove. Use a view's `state` through `window.prismal.state` for open menus or first-run states.
+- Provide laptop and phone views. Name options in 1-3 words with one sentence explaining the idea.
 
-## 3. Describe, build and check
+## 3. Describe and verify
 
-- Write `prismal/prismal.json`: title, round, about, decisions, views and options.
-- Each view has exactly one `url` or `file`. URLs resolve against `base`; the live page must include the client.
-- File sources are self-contained HTML: inline CSS, JS and images, or absolute URLs. A `{option}` placeholder
-  expands per option; `#` sets the start hash route. No relative asset paths or History API routing.
-- Name options in 1-3 words with a one-sentence idea. Add `why` and `tradeoff` when useful.
-- Add a CSS `focus` selector to crop a view around the decision.
-- Run `npx prismal build`, then `npx prismal check --shots <dir>`. Check must pass.
-- Open representative shots yourself. No blank frames, hidden targets, identical-to-Now proposals or phone overflow.
-- Keep the user's dev server running for live URLs. File-based rounds need no server.
+- Write `prismal/prismal.json` with title, round, about, decisions, views and options. `init` scaffolds metadata, not variants.
+- Each view has one `url` or `file`. Live URLs resolve against `base` and require the client in the app.
+- File sources use inline assets or absolute URLs, never relative assets. Inline everything for offline use.
+  `{option}` expands per option; `#` selects a hash route. Do not use History API routing in file sources.
+- Add `focus`, `why` and `tradeoff` when useful.
+- Install the checker when needed: `npm i -D playwright && npx playwright install chromium`.
+- Run `npx prismal build` and `npx prismal check --shots <dir>`. Use stable data; check compares exact screenshots,
+  not visual similarity or design quality.
+- Open representative views and exercise the review actions. No blank frames, missing targets or phone overflow.
+  Keep the dev server running for live sources; reload the lab after a watched rebuild.
 
 ## 4. Hand off
 
-- Give the user the path to `lab.html` and explain what the round decides in a few lines.
-- Do not pre-pick or rank. The reviewer can interact with the frames, compare beside Now, like, pick and note.
-- Ask for the exported `prismal-choices-r<round>.json`, not a transcription of their choices.
+- Share `lab.html`, briefly state what the round decides, and ask for `prismal-choices-r<round>.json`.
+- Do not pre-pick, rank or invent approval. The user's export is the decision record.
 
-## 5. Apply the choices
+## 5. Apply and refine
 
-- A pick is settled. A like is an idea to carry forward. A note is a requirement.
-- `pick: null` is undecided; `pick: "now"` means keep the current design.
-- Question answers and word choices are decisions too. Read element and journey feedback, not just picks.
-- Make settled picks canonical immediately and delete their alternatives. If variants must remain until the end,
-  put the settled selections in `defaults`, which applies to every frame.
-- For the next round, increment `round` and refine open decisions with 3-4 options.
-- Once layout settles, add `questions`, `words`, named `elements`, `inspect` routes and `journeys`.
-- Element verdicts are clear/unclear/change; journey verdicts are obvious/unclear/missing.
-- Do not overwrite earlier choice exports or invent an approval.
+- A pick is settled, a like informs refinement, and a note is a requirement.
+  `pick: null` is undecided; `pick: "now"` keeps current.
+- Read question answers, word choices, element feedback and journey verdicts as well as picks.
+- Make settled picks canonical and remove alternatives. If variants must remain temporarily, record settled picks in `defaults`.
+- Increment `round` and refine open decisions with 3-4 options. Never overwrite earlier exports.
+- Once layout settles, add questions, vocabulary, inspect routes and journeys.
+  Register meaningful controls, labels and marks with element names, groups, selectors and descriptions, not only containers.
+- Verify optional review pages interactively and account for the [current inspector limitations][inspect-limits].
 
 ## 6. Finish
 
-- Implement every pick canonically. Delete switches, the client include, unused variants and the lab folder.
-- Keep choices files only when the user wants a record.
+- Apply every decision canonically. Remove the client, switches, unused variants and lab folder.
+- Keep exported choices only if the user wants a record.
 - Run the app's tests and inspect the result at laptop and phone size.
-- Follow the user's normal PR workflow; do not merge or publish without their approval.
+- Follow the user's PR workflow; do not merge or publish without approval.
 
-## Commands
-
-`npx prismal init` creates the manifest. `npx prismal build --watch` rebuilds changed sources.
-`npx prismal build --open` opens the lab. `-o <file>` chooses its destination.
-If check needs a browser: `npm i -D playwright && npx playwright install chromium`.
-Before an npm release exists, install prismal from the repository/preview branch in its README; do not assume
-an uninstalled bare `npx prismal` resolves to this project.
+[inspect-limits]: https://github.com/gugarosa/prismal/blob/main/docs/architecture.md#inspect-limitations
