@@ -96,7 +96,10 @@ async function ready(page, count) {
     return (
       cards.length === n &&
       cards.every(
-        (card) => card.querySelector(".frame-status").hidden && card.querySelectorAll("iframe").length === 1,
+        (card) =>
+          card.getAttribute("aria-busy") === "false" &&
+          card.querySelector(".frame-status").hidden &&
+          card.querySelectorAll("iframe").length === 1,
       )
     );
   }, count);
@@ -111,10 +114,9 @@ test("lazy frames load two at a time, survive supersession, and reject foreign m
   }
   await ready(page, 4);
   const values = await Promise.all(
-    page
-      .frames()
-      .slice(1)
-      .map((frame) => frame.locator("h1").textContent()),
+    Array.from({ length: 4 }, (_, index) =>
+      page.locator("iframe").nth(index).contentFrame().locator("h1").textContent(),
+    ),
   );
   assert.deepEqual(values, ["a", "a", "a", "a"]);
   await page.evaluate(() => window.postMessage({ ol: 1, type: "error", message: "Not an owned frame" }, "*"));

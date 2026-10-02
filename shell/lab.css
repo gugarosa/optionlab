@@ -615,6 +615,11 @@ textarea {
   color: var(--gray-500);
   max-width: 50%;
 }
+.frame-card[aria-busy="true"] .frame-caption::after {
+  content: "Loading";
+  color: var(--gray-500);
+  font-size: 12px;
+}
 .frame-body {
   position: relative;
   display: flex;

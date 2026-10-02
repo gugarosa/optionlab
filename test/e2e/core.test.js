@@ -32,7 +32,9 @@ async function settled(page, count) {
       cards.length === n &&
       cards.every(
         (card) =>
-          card.querySelector("iframe")?.style.opacity === "1" && card.querySelector(".frame-status")?.hidden,
+          card.getAttribute("aria-busy") === "false" &&
+          card.querySelector("iframe")?.style.opacity === "1" &&
+          card.querySelector(".frame-status")?.hidden,
       )
     );
   }, count);

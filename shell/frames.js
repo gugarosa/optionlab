@@ -58,6 +58,7 @@ function activateFrame(task) {
 function failFrame(task, text) {
   if (task.disposed || (task.rec.pending !== task && task.rec.active !== task)) return;
   task.error = text;
+  if ((task.rec.pending || task.rec.active) === task) task.rec.card.setAttribute("aria-busy", "false");
   finishLoading(task);
   if (task.frame) activateFrame(task);
   task.rec.status.hidden = false;
@@ -141,6 +142,7 @@ function pumpFrames() {
 function requestFrame(rec, plan) {
   disposeFrame(rec.pending === rec.active ? null : rec.pending);
   rec.card.classList.remove("frame-error");
+  rec.card.setAttribute("aria-busy", "true");
   rec.status.innerHTML = `<span class="loading-line"></span><span>Loading the live page</span>`;
   rec.status.hidden = Boolean(rec.active);
   rec.pending = { rec, plan, loading: false, ready: false, disposed: false, height: 0 };
@@ -213,6 +215,7 @@ addEventListener("message", (event) => {
   if (task.rec.pending !== task && task.rec.active !== task) return;
   if (payload.type === "ready" && !task.error) {
     task.ready = true;
+    if ((task.rec.pending || task.rec.active) === task) task.rec.card.setAttribute("aria-busy", "false");
     finishLoading(task);
     sendFrame(task, "init", {
       elements: items("elements"),
