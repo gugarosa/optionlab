@@ -206,7 +206,20 @@ function inspectorPanel() {
 }
 function updateInspectorPanel() {
   const panel = document.getElementById("inspect-panel");
-  if (panel) panel.innerHTML = inspectorPanel();
+  if (!panel) return;
+  const focused = document.activeElement;
+  const ownedFocus = panel.contains(focused);
+  const next = document.createElement("template");
+  next.innerHTML = inspectorPanel();
+  patchChildren(panel, next.content);
+  if (
+    ownedFocus &&
+    (!(focused instanceof HTMLElement) || !focused.isConnected || focused.matches(":disabled"))
+  ) {
+    const fallback =
+      panel.querySelector(".instance-controls button:not(:disabled), [data-action=select-element]") || stage;
+    if (fallback instanceof HTMLElement) fallback.focus({ preventScroll: true });
+  }
 }
 function inspectMessage(task, payload) {
   const rec = frameRecords.get("inspect");

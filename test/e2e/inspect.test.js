@@ -46,13 +46,41 @@ test("Inspect selects named instances, blocks page actions, and exports element 
   assert.match(await page.locator(".selected-text").textContent(), /Free/);
   await clickPreview(page, page.locator(".frame-card iframe"), ".start-trial");
   assert.equal(await frame.locator(".feedback").textContent(), "");
-  await page.getByRole("button", { name: "Change", exact: true }).click();
+  await page.getByRole("button", { name: "Change", exact: true }).focus();
+  await page.getByRole("button", { name: "Change", exact: true }).press("Enter");
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Change", exact: true })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
   await page.locator('textarea[data-note="elements"]').fill("Make the price easier to scan.");
-  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).focus();
+  await page.getByRole("button", { name: "Next", exact: true }).press("Enter");
   await page.waitForFunction(
     () => document.querySelector(".instance-controls > span")?.textContent === "2 of 3",
   );
   assert.match(await page.locator(".selected-text").textContent(), /Plus/);
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Next", exact: true })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  await page.getByRole("button", { name: "Next", exact: true }).press("Enter");
+  await page.waitForFunction(
+    () => document.querySelector(".instance-controls > span")?.textContent === "3 of 3",
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Previous", exact: true })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  await page.getByRole("button", { name: "Previous", exact: true }).press("Enter");
+  await page.waitForFunction(
+    () => document.querySelector(".instance-controls > span")?.textContent === "2 of 3",
+  );
   await page.getByRole("button", { name: "Clear", exact: true }).click();
   await page.getByRole("button", { name: "Previous", exact: true }).click();
   await page.waitForFunction(

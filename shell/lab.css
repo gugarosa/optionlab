@@ -464,8 +464,8 @@ progress::-moz-progress-bar {
 .option-tabs {
   flex: 1;
   overflow-x: auto;
-  padding: 3px;
-  margin: -3px;
+  padding: 6px;
+  margin: -6px;
 }
 .option-tab {
   flex: 1 0 96px;
@@ -482,6 +482,9 @@ progress::-moz-progress-bar {
 .option-tab.active {
   border-color: var(--brand-500);
   outline: 1px solid var(--brand-500);
+}
+.option-tab:focus-visible {
+  outline: 2px solid var(--brand-500);
 }
 .tab-top {
   display: flex;

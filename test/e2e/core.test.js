@@ -52,6 +52,13 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
   assert.equal(await page.locator("h1").textContent(), "The first impression");
   assert.equal(await page.frames()[1].locator("html").getAttribute("data-ol-hero"), "b");
   assert.match(await page.frames()[1].locator(".hero h1").textContent(), /room to think/);
+  await page.locator("#tab-b").focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  assert.equal(
+    await page.locator("#tab-b").evaluate((element) => getComputedStyle(element).outlineWidth),
+    "2px",
+  );
   await page.locator('[data-action="pick"]').click();
   await page.locator('[data-action="like"]').click();
   await page.locator("textarea").fill("Keep the calm notebook, and borrow A's examples.");
