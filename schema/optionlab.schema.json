@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "optionlab manifest",
+  "description": "One review round, its live alternatives, and optional review prompts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "round", "decisions"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL to this schema for editor support."
+    },
+    "title": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Review round title."
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "about": {
+      "type": "string"
+    },
+    "base": {
+      "$ref": "#/$defs/absoluteHttpUrl",
+      "description": "Absolute HTTP(S) base used to resolve relative live URLs."
+    },
+    "devices": {
+      "type": "object",
+      "description": "Named viewport sizes. Supplied entries extend or replace the built-in laptop and phone sizes.",
+      "default": {
+        "laptop": [1440, 900],
+        "phone": [390, 844]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/device"
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Decision IDs mapped to option IDs. Prior-round IDs are allowed.",
+      "default": {},
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/question"
+      }
+    },
+    "words": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/word"
+      }
+    },
+    "elements": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/element"
+      }
+    },
+    "inspect": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/inspectRoute"
+      }
+    },
+    "journeys": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/journey"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "not": {
+          "required": ["base"]
+        }
+      },
+      "then": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "properties": {
+                "views": {
+                  "items": {
+                    "properties": {
+                      "url": {
+                        "$ref": "#/$defs/absoluteHttpUrl"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "inspect": {
+            "items": {
+              "properties": {
+                "url": {
+                  "$ref": "#/$defs/absoluteHttpUrl"
+                }
+              }
+            }
+          },
+          "journeys": {
+            "items": {
+              "properties": {
+                "steps": {
+                  "items": {
+                    "properties": {
+                      "url": {
+                        "$ref": "#/$defs/absoluteHttpUrl"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "absoluteHttpUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"
+    },
+    "url": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/absoluteHttpUrl"
+        },
+        {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri-reference",
+          "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?=.*\\S).+"
+        }
+      ]
+    },
+    "file": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?=[^#]*\\S(?:#|$)).+",
+      "description": "Local self-contained HTML path. {option} is expanded during build; a hash route is preserved."
+    },
+    "device": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "state": {
+      "type": "object",
+      "description": "JSON state sent to the embedded page client."
+    },
+    "view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caption"],
+      "properties": {
+        "caption": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "device": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "laptop"
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "file": {
+          "$ref": "#/$defs/file"
+        },
+        "focus": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Selector used to focus the preview."
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["url"],
+          "not": {
+            "required": ["file"]
+          }
+        },
+        {
+          "required": ["file"],
+          "not": {
+            "required": ["url"]
+          }
+        }
+      ]
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "enum": ["close", "different", "current"]
+        },
+        "idea": {
+          "type": "string"
+        },
+        "why": {
+          "type": "string"
+        },
+        "tradeoff": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "now"
+              }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "current"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "kind": {
+                "enum": ["close", "different"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "question", "views", "options"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "question": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "views": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/view"
+          }
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 7,
+          "items": {
+            "$ref": "#/$defs/option"
+          },
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "not": {
+                      "const": "now"
+                    }
+                  }
+                },
+                "required": ["id"]
+              },
+              "minContains": 1,
+              "maxContains": 6
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "now"
+                  }
+                },
+                "required": ["id"]
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ]
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question", "choices"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "group": {
+          "type": "string"
+        },
+        "question": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "why": {
+          "type": "string"
+        },
+        "choices": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "word": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "term", "means"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "group": {
+          "type": "string"
+        },
+        "term": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "means": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "where": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "selector"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "group": {
+          "type": "string"
+        },
+        "selector": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "what": {
+          "type": "string"
+        }
+      }
+    },
+    "inspectRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "device": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "laptop"
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "file": {
+          "$ref": "#/$defs/file"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["url"],
+          "not": {
+            "required": ["file"]
+          }
+        },
+        {
+          "required": ["file"],
+          "not": {
+            "required": ["url"]
+          }
+        }
+      ]
+    },
+    "journeyStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "title"],
+      "properties": {
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "file": {
+          "$ref": "#/$defs/file"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "selector": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "does": {
+          "type": "string"
+        },
+        "ask": {
+          "type": "string"
+        },
+        "device": {
+          "$ref": "#/$defs/nonEmptyString",
+          "default": "laptop"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["url"],
+          "not": {
+            "required": ["file"]
+          }
+        },
+        {
+          "required": ["file"],
+          "not": {
+            "required": ["url"]
+          }
+        }
+      ]
+    },
+    "journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "steps"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/journeyStep"
+          }
+        }
+      }
+    }
+  }
+}

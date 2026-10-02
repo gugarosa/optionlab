@@ -1,0 +1,225 @@
+{
+  "$schema": "../../schema/optionlab.schema.json",
+  "title": "Lumen",
+  "round": 1,
+  "about": "A quieter home for notes, ideas, and things taking shape. This round explores the opening, the plans, and the navigation. Try the pages, like what is worth keeping, and pick what feels right.",
+  "devices": { "laptop": [1440, 900], "phone": [390, 844] },
+  "defaults": {},
+  "decisions": [
+    {
+      "id": "hero",
+      "title": "The first impression",
+      "question": "How should Lumen invite someone to start?",
+      "views": [
+        { "caption": "Laptop", "device": "laptop", "file": "lumen.html#/", "focus": ".hero" },
+        { "caption": "Phone", "device": "phone", "file": "lumen.html#/", "focus": ".hero" }
+      ],
+      "options": [
+        {
+          "id": "now",
+          "name": "A simple welcome",
+          "idea": "One idea, a little breathing room, and a way in."
+        },
+        {
+          "id": "a",
+          "kind": "close",
+          "name": "Possibilities first",
+          "idea": "A few sample collections make the blank page feel less blank.",
+          "why": "Specific examples help people find their own starting point."
+        },
+        {
+          "id": "b",
+          "kind": "close",
+          "name": "A window inside",
+          "idea": "An open notebook sits beside the invitation.",
+          "why": "See the product before deciding to try it."
+        },
+        {
+          "id": "c",
+          "kind": "close",
+          "name": "Start a space",
+          "idea": "An email field makes the next step feel immediate.",
+          "tradeoff": "Asks for a commitment before exploring."
+        },
+        {
+          "id": "d",
+          "kind": "different",
+          "name": "Try a thought",
+          "idea": "Write a real note in the opening, without signing up.",
+          "why": "The first useful moment happens here.",
+          "tradeoff": "More to interact with on a small screen."
+        },
+        {
+          "id": "e",
+          "kind": "different",
+          "name": "Follow an idea",
+          "idea": "Three small scenes show a thought becoming something worth keeping.",
+          "tradeoff": "A longer path to the first action."
+        }
+      ]
+    },
+    {
+      "id": "plans",
+      "title": "Finding a plan",
+      "question": "What makes it easiest to choose the right amount of space?",
+      "views": [
+        { "caption": "Laptop", "device": "laptop", "file": "lumen.html#/pricing", "focus": ".plans" },
+        { "caption": "Phone", "device": "phone", "file": "lumen.html#/pricing", "focus": ".plans" }
+      ],
+      "options": [
+        {
+          "id": "now",
+          "name": "Three plans",
+          "idea": "Three straightforward plans, with Plus gently emphasized."
+        },
+        {
+          "id": "a",
+          "name": "A use for each",
+          "idea": "Each plan opens with the kind of work it makes room for."
+        },
+        { "id": "b", "name": "Side by side", "idea": "A single table lines up the practical differences." },
+        {
+          "id": "c",
+          "kind": "different",
+          "name": "Start with you",
+          "idea": "Choose how you work, then see one suggested plan.",
+          "tradeoff": "The full comparison takes another click."
+        }
+      ]
+    },
+    {
+      "id": "nav",
+      "title": "Getting around",
+      "question": "How much should the navigation put within reach?",
+      "views": [
+        { "caption": "Laptop", "device": "laptop", "file": "lumen.html#/", "focus": ".site-nav" },
+        { "caption": "Phone", "device": "phone", "file": "lumen.html#/", "focus": ".site-nav" }
+      ],
+      "options": [
+        {
+          "id": "now",
+          "name": "Just the essentials",
+          "idea": "The name, the main pages, and a place to start."
+        },
+        {
+          "id": "a",
+          "name": "A familiar shelf",
+          "idea": "Links sit beside the name on a softly tinted bar."
+        },
+        {
+          "id": "b",
+          "name": "Find a note",
+          "idea": "Search takes the center, for someone already at home here.",
+          "tradeoff": "Less guidance for a first visit."
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "billing",
+      "group": "Plans",
+      "question": "Which billing period should appear first?",
+      "why": "Annual saves a little; monthly is simpler to understand.",
+      "choices": ["Monthly", "Annual", "Let me choose"]
+    },
+    {
+      "id": "search",
+      "group": "Navigation",
+      "question": "Should search be visible before someone has any notes?",
+      "choices": ["Keep it", "Show it later", "Skip search"]
+    }
+  ],
+  "words": [
+    {
+      "id": "workspace",
+      "group": "Finding your way",
+      "term": "Workspace",
+      "means": "The place where your notes and collections live.",
+      "where": ["Home"],
+      "alternatives": ["Notebook", "Space"]
+    },
+    {
+      "id": "collection",
+      "group": "Finding your way",
+      "term": "Collection",
+      "means": "A group of related notes.",
+      "where": ["Home"],
+      "alternatives": ["Folder", "Group"]
+    },
+    {
+      "id": "plus",
+      "group": "Plans",
+      "term": "Plus",
+      "means": "The plan for a person's ongoing projects.",
+      "where": ["Plans"],
+      "alternatives": ["Personal", "Studio"]
+    }
+  ],
+  "elements": [
+    {
+      "name": "Navigation",
+      "group": "Getting around",
+      "selector": ".site-nav",
+      "what": "The main links at the top of a page."
+    },
+    {
+      "name": "Plan card",
+      "group": "Plans",
+      "selector": ".plan",
+      "what": "One plan, its price, and what is included."
+    },
+    {
+      "name": "Sample note",
+      "group": "Notes",
+      "selector": ".note-paper",
+      "what": "A small example of a note someone might keep."
+    },
+    {
+      "name": "Primary action",
+      "group": "Next steps",
+      "selector": ".primary-action",
+      "what": "The main way to begin."
+    }
+  ],
+  "inspect": [
+    { "label": "Home", "file": "lumen.html#/" },
+    { "label": "Plans", "file": "lumen.html#/pricing" }
+  ],
+  "journeys": [
+    {
+      "id": "first-note",
+      "title": "A first place to write",
+      "steps": [
+        {
+          "file": "lumen.html#/",
+          "selector": ".site-nav a[href='#/pricing']",
+          "title": "Find the plans",
+          "does": "The navigation offers a direct path to plans.",
+          "ask": "Would you know where to go?"
+        },
+        {
+          "file": "lumen.html#/pricing",
+          "selector": ".plans",
+          "title": "Compare the space",
+          "does": "The plans explain what each one makes room for.",
+          "ask": "Can you find a plan for yourself?"
+        },
+        {
+          "file": "lumen.html#/pricing",
+          "selector": ".billing-toggle",
+          "title": "Choose the rhythm",
+          "does": "Monthly and annual billing sit together.",
+          "ask": "Is the price interval clear?"
+        },
+        {
+          "file": "lumen.html#/pricing",
+          "selector": ".start-trial",
+          "title": "Take a small step",
+          "does": "Each plan has a clear way to begin.",
+          "ask": "Do you know what happens next?"
+        }
+      ]
+    }
+  ]
+}
