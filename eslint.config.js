@@ -38,6 +38,6 @@ export default [
   },
   {
     files: ["lib/check.js", "test/e2e/*.js"],
-    languageOptions: { globals: { ...globals.browser, ...globals.nodeBuiltin, optionlab: "readonly" } },
+    languageOptions: { globals: { ...globals.browser, ...globals.nodeBuiltin, prismal: "readonly" } },
   },
 ];

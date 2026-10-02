@@ -11,8 +11,8 @@ import { build } from "../../lib/build.js";
 let browser, directory, lab;
 before(async () => {
   browser = await launchBrowser();
-  directory = await mkdtemp(join(tmpdir(), "optionlab-inspect-"));
-  const result = await build(resolve("examples/lumen/optionlab.json"), {
+  directory = await mkdtemp(join(tmpdir(), "prismal-inspect-"));
+  const result = await build(resolve("examples/lumen/prismal.json"), {
     output: join(directory, "lab.html"),
   });
   lab = pathToFileURL(result.output).href;
@@ -116,7 +116,7 @@ test("Inspect selects named instances, blocks page actions, and exports element 
 });
 test("specificity, explicit names and accessible fallback names work without intercepting when off", async () => {
   const source =
-    '<!doctype html><style>body{margin:24px}button{padding:12px;margin:12px}</style><button class="action" id="actual" data-ol-name="Explicit">Start free trial</button><button id="plain">Continue</button><div data-ol-name="Helper text"><p>Some useful context.</p></div><script>window.counts={pointerdown:0,mousedown:0,click:0};for(const type of Object.keys(counts))document.addEventListener(type,()=>counts[type]++);window.instance=Math.random();</script>';
+    '<!doctype html><style>body{margin:24px}button{padding:12px;margin:12px}</style><button class="action" id="actual" data-prismal-name="Explicit">Start free trial</button><button id="plain">Continue</button><div data-prismal-name="Helper text"><p>Some useful context.</p></div><script>window.counts={pointerdown:0,mousedown:0,click:0};for(const type of Object.keys(counts))document.addEventListener(type,()=>counts[type]++);window.instance=Math.random();</script>';
   await writeFile(join(directory, "named.html"), source);
   const manifest = join(directory, "named.json");
   await writeFile(
@@ -150,14 +150,14 @@ test("specificity, explicit names and accessible fallback names work without int
   await page.waitForFunction(
     () => document.querySelector(".selection-head h2")?.textContent === 'Button "Continue"',
   );
-  await clickPreview(page, page.locator(".frame-card iframe"), "[data-ol-name='Helper text']");
+  await clickPreview(page, page.locator(".frame-card iframe"), "[data-prismal-name='Helper text']");
   await page.waitForFunction(
     () => document.querySelector(".selection-head h2")?.textContent === "Helper text",
   );
   assert.equal(await page.locator(".instance-controls > span").textContent(), "1 of 1");
   const instance = await frame.locator("body").evaluate(() => window.instance);
   await page.getByRole("button", { name: "Inspect on", exact: true }).click();
-  await frame.locator("[data-ol-ring=selection]").waitFor({ state: "hidden" });
+  await frame.locator("[data-prismal-ring=selection]").waitFor({ state: "hidden" });
   await clickPreview(page, page.locator(".frame-card iframe"), "#actual");
   assert.deepEqual(await frame.locator("body").evaluate(() => window.counts), {
     pointerdown: 1,
@@ -180,7 +180,7 @@ test("journey targets have labeled rings at laptop and phone size; verdicts and 
       const card = page.locator(".journey-step").nth(index).locator(".frame-card");
       await ready(page, card);
       const frame = card.locator("iframe").contentFrame();
-      const ring = frame.locator("[data-ol-ring=highlight]");
+      const ring = frame.locator("[data-prismal-ring=highlight]");
       await ring.waitFor();
       assert.equal(await ring.textContent(), `Step ${index + 1}`);
       const delta = await frame
@@ -188,7 +188,7 @@ test("journey targets have labeled rings at laptop and phone size; verdicts and 
         .first()
         .evaluate((element) => {
           const target = element.getBoundingClientRect();
-          const outline = document.querySelector("[data-ol-ring=highlight]").getBoundingClientRect();
+          const outline = document.querySelector("[data-prismal-ring=highlight]").getBoundingClientRect();
           return (
             Math.abs(outline.left - Math.max(0, target.left)) +
             Math.abs(outline.top - Math.max(0, target.top))

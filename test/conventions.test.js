@@ -102,7 +102,7 @@ test("lint distinguishes browser, Node and shared-shell scopes", async () => {
 });
 
 test("Markdown verification rejects broken local paths and heading fragments", async (t) => {
-  const directory = await mkdtemp(join(root, ".optionlab-docs-"));
+  const directory = await mkdtemp(join(root, ".prismal-docs-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, "probe.md");
   await writeFile(file, "# Probe\n\n[Missing](missing.md)\n\n[Wrong section](#unknown)\n");

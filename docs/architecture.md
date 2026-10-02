@@ -6,11 +6,11 @@ Use this reference when changing bundling, frame lifecycles or the persisted rev
 
 ## Build one portable artifact
 
-[The CLI](../bin/optionlab.js) delegates to the functions behind [the public package API](../lib/index.js).
+[The CLI](../bin/prismal.js) delegates to the functions behind [the public package API](../lib/index.js).
 The ownership and dependency rules live in [CONVENTIONS.md](../CONVENTIONS.md); usage lives in the [README](../README.md).
 
 [`loadManifest()`](../lib/manifest.js) validates and normalizes one manifest. Its hand-written validation agrees with
-the [manifest schema](../schema/optionlab.schema.json), including the implicit current option and device defaults.
+the [manifest schema](../schema/prismal.schema.json), including the implicit current option and device defaults.
 
 [`build()`](../lib/build.js) resolves local source files relative to the manifest, expands `{option}`, deduplicates
 file contents and injects the client before application scripts. A file's hash remains a route, not a second copy
@@ -35,7 +35,7 @@ never interpolated into an HTML attribute. Local files must be self-contained to
 
 ## Carry choices before the app starts
 
-[`client/optionlab.js`](../client/optionlab.js) installs `window.optionlab` once. The frame's JSON `name` supplies
+[`client/prismal.js`](../client/prismal.js) installs `window.prismal` once. The frame's JSON `name` supplies
 choices and state synchronously, before application code runs. Query parameters are the debugging channel.
 The precedence is frame name, query, then `now`.
 

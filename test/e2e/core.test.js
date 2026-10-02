@@ -11,8 +11,8 @@ import { build } from "../../lib/build.js";
 let browser, directory, lab;
 before(async () => {
   browser = await launchBrowser();
-  directory = await mkdtemp(join(tmpdir(), "optionlab-e2e-"));
-  const result = await build(resolve("examples/lumen/optionlab.json"), {
+  directory = await mkdtemp(join(tmpdir(), "prismal-e2e-"));
+  const result = await build(resolve("examples/lumen/prismal.json"), {
     output: join(directory, "lab.html"),
   });
   lab = pathToFileURL(result.output).href;
@@ -49,8 +49,9 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
   });
   await page.goto(`${lab}#/d/hero/b`);
   await settled(page, 2);
+  assert.equal(await page.title(), "Lumen · Prismal");
   assert.equal(await page.locator("h1").textContent(), "The first impression");
-  assert.equal(await page.frames()[1].locator("html").getAttribute("data-ol-hero"), "b");
+  assert.equal(await page.frames()[1].locator("html").getAttribute("data-prismal-hero"), "b");
   assert.match(await page.frames()[1].locator(".hero h1").textContent(), /room to think/);
   await page.locator("#tab-b").focus();
   await page.keyboard.press("Tab");
@@ -67,8 +68,9 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
   const downloadEvent = page.waitForEvent("download");
   await page.locator(".rail [data-action=export]").click();
   const download = await downloadEvent;
-  assert.equal(download.suggestedFilename(), "optionlab-choices-r1.json");
+  assert.equal(download.suggestedFilename(), "prismal-choices-r1.json");
   const exported = JSON.parse(await readFile(await download.path(), "utf8"));
+  assert.equal(exported.prismal, 1);
   assert.equal(exported.decisions[0].pick, "b");
   assert.deepEqual(exported.decisions[0].liked, ["b"]);
   assert.match(exported.decisions[0].note, /borrow A/);
@@ -84,7 +86,7 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
         page
           .frames()
           .slice(1)
-          .map((frame) => frame.locator("html").getAttribute("data-ol-hero")),
+          .map((frame) => frame.locator("html").getAttribute("data-prismal-hero")),
       )
     ).sort(),
     ["b", "b", "now", "now"],
@@ -118,7 +120,7 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
   await page.locator("#import-file").setInputFiles({
     name: "broken.json",
     mimeType: "application/json",
-    buffer: Buffer.from('{"optionlab":1}'),
+    buffer: Buffer.from('{"prismal":1}'),
   });
   await page.waitForFunction(() => document.getElementById("toast").textContent.startsWith("Import failed:"));
   assert.equal(await page.locator('[data-action="pick"]').getAttribute("aria-pressed"), "true");
@@ -147,7 +149,7 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
 });
 test("the first application script sees choices, state and its srcdoc hash route", async () => {
   const source =
-    '<!doctype html><html><head><script>window.first={choice:optionlab.choice("hero"),state:optionlab.state,route:location.hash};</script></head><body><h1>First script</h1><a href="#/next">Next route</a></body></html>';
+    '<!doctype html><html><head><script>window.first={choice:prismal.choice("hero"),state:prismal.state,route:location.hash};</script></head><body><h1>First script</h1><a href="#/next">Next route</a></body></html>';
   await writeFile(join(directory, "first.html"), source);
   const file = join(directory, "first.json");
   await writeFile(
@@ -179,7 +181,7 @@ test("the first application script sees choices, state and its srcdoc hash route
   });
   await clickPreview(page, page.locator(".frame-card iframe"), "a");
   await frame.waitForFunction(() => location.hash === "#/next");
-  assert.equal(await frame.evaluate(() => optionlab.choice("hero")), "a");
+  assert.equal(await frame.evaluate(() => prismal.choice("hero")), "a");
   assert.equal(await page.locator("h1").textContent(), "Hero");
   assert.equal(
     await frame.evaluate(() => {

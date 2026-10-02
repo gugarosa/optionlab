@@ -12,9 +12,9 @@ import { skill } from "../lib/skill.js";
 import { loadManifest } from "../lib/manifest.js";
 
 const exec = promisify(execFile);
-const cli = fileURLToPath(new URL("../bin/optionlab.js", import.meta.url));
+const cli = fileURLToPath(new URL("../bin/prismal.js", import.meta.url));
 async function workspace(t) {
-  const root = await mkdtemp(join(tmpdir(), "optionlab-scaffold-"));
+  const root = await mkdtemp(join(tmpdir(), "prismal-scaffold-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   return root;
 }
@@ -41,13 +41,13 @@ test("init preserves existing files and creates a valid editable round", async (
 test("CLI installs the exact skill in default and custom directories without overwriting", async (t) => {
   const root = await workspace(t);
   await exec(process.execPath, [cli, "init"], { cwd: root });
-  assert.equal((await loadManifest(join(root, "optionlab/optionlab.json"))).manifest.round, 1);
+  assert.equal((await loadManifest(join(root, "prismal/prismal.json"))).manifest.round, 1);
   await exec(process.execPath, [cli, "skill"], { cwd: root });
   const original = await readFile(new URL("../skill/SKILL.md", import.meta.url), "utf8");
-  assert.equal(await readFile(join(root, ".github/skills/optionlab/SKILL.md"), "utf8"), original);
-  const custom = await skill(join(root, ".claude/skills/optionlab"));
+  assert.equal(await readFile(join(root, ".github/skills/prismal/SKILL.md"), "utf8"), original);
+  const custom = await skill(join(root, ".claude/skills/prismal"));
   assert.equal(await readFile(custom, "utf8"), original);
-  await assert.rejects(skill(join(root, ".claude/skills/optionlab")), /Skill already exists/);
+  await assert.rejects(skill(join(root, ".claude/skills/prismal")), /Skill already exists/);
 });
 test(
   "open passes a single literal output path to the native opener",

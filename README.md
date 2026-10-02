@@ -1,6 +1,6 @@
-![The Lumen design lab, with live laptop and phone options](media/lab.png)
+![Lumen in Prismal, with live laptop and phone options](media/lab.png)
 
-# optionlab
+# Prismal
 
 **Real design options. Your app. One file of choices.**
 
@@ -11,7 +11,7 @@ pick and leave notes. Export one JSON file. The agent makes your picks canonical
 <details>
 <summary>Why a live lab?</summary>
 
-**Why not Storybook?** It presents isolated components. Optionlab frames your real pages and records a choice.
+**Why not Storybook?** It presents isolated components. Prismal frames your real pages and records a choice.
 
 **Why not screenshots?** Frames are interactive and responsive. Screenshots verify options, not replace them.
 
@@ -26,14 +26,14 @@ pick and leave notes. Export one JSON file. The agent makes your picks canonical
 This is an **unpublished preview**. Node 20+ is enough to build; the reviewer installs nothing.
 
 ```sh
-git clone https://github.com/gugarosa/optionlab.git
-cd optionlab
+git clone https://github.com/gugarosa/prismal.git
+cd prismal
 ```
 
 ## Quick start
 
 ```sh
-node bin/optionlab.js build examples/lumen/optionlab.json --open
+node bin/prismal.js build examples/lumen/prismal.json --open
 ```
 
 Lumen is a fictional note-taking product with three decisions,
@@ -45,18 +45,18 @@ After building, `lab.html` can move anywhere and open by double-clicking.
 Install this preview explicitly, then give your agent the [skill](skill/SKILL.md):
 
 ```sh
-npm install --save-dev github:gugarosa/optionlab
-npx optionlab init
-npx optionlab skill
+npm install --save-dev github:gugarosa/prismal
+npx prismal init
+npx prismal skill
 ```
 
 Ask the agent to propose several real options per decision, implement them in your app,
-and describe the round in `optionlab/optionlab.json`. Now is unchanged; A-C are close
+and describe the round in `prismal/prismal.json`. Now is unchanged; A-C are close
 variations, D-E explore different answers. Use fewer when the decision is small.
 
 ```sh
-npx optionlab build --open
-npx optionlab check --shots optionlab/shots
+npx prismal build --open
+npx prismal check --shots prismal/shots
 ```
 
 Do not hand off a broken round. Check every option, then send the reviewer `lab.html`.
@@ -64,13 +64,13 @@ Live URLs need your existing dev server; local HTML sources do not.
 
 ## Write a variant
 
-Copy `node_modules/optionlab/client/optionlab.js` into your app's public directory.
+Copy `node_modules/prismal/client/prismal.js` into your app's public directory.
 Load it **before app scripts, in development only**:
 
 ```html
-<script src="/optionlab.js"></script>
+<script src="/prismal.js"></script>
 <style>
-  html[data-ol-header="b"] .site-header {
+  html[data-prismal-header="b"] .site-header {
     padding-block: 24px;
   }
 </style>
@@ -79,19 +79,19 @@ Load it **before app scripts, in development only**:
 React, Vue and Svelte need no adapter. In the development entry:
 
 ```js
-import "optionlab/client";
-const header = window.optionlab?.choice("header") ?? "now";
-const menu = window.optionlab?.state.menu ?? "closed";
+import "prismal/client";
+const header = window.prismal?.choice("header") ?? "now";
+const menu = window.prismal?.state.menu ?? "closed";
 ```
 
-`optionlab.is("header", "b")` is a boolean shortcut. Outside a lab frame the client
+`prismal.is("header", "b")` is a boolean shortcut. Outside a lab frame the client
 only resolves choices; it does not add inspection UI or intercept events.
-Use `?ol.header=b&ol.state.menu=open` to inspect a variant in a normal tab.
+Use `?prismal.header=b&prismal.state.menu=open` to inspect a variant in a normal tab.
 
 ## One manifest
 
-See [Lumen's complete manifest](examples/lumen/optionlab.json) and the
-[editor schema](schema/optionlab.schema.json). Validation reports the exact field to fix.
+See [Lumen's complete manifest](examples/lumen/prismal.json) and the
+[editor schema](schema/prismal.schema.json). Validation reports the exact field to fix.
 
 | Field                     | Purpose                                                                     |
 | ------------------------- | --------------------------------------------------------------------------- |
@@ -126,12 +126,12 @@ Precedence is name, query, then `now`. Frames combine defaults, your picks, and 
 ## Review and hand back
 
 The rail tracks progress. Decision tabs offer Like, Pick, Focus/Full page and Beside Now.
-Inspect selects registered elements, then explicit `data-ol-name` labels, then readable
+Inspect selects registered elements, then explicit `data-prismal-name` labels, then readable
 role/name fallbacks. Previous/Next walks instances without triggering the page's actions.
 Journeys highlight each target at laptop or phone size.
 
-Changes autosave under `optionlab:<title>:r<round>`. Export
-`optionlab-choices-r<round>.json`; import can restore it and warns about a different title or round.
+Changes autosave under `prismal:<title>:r<round>`. Export
+`prismal-choices-r<round>.json`; import can restore it and warns about a different title or round.
 Storage availability varies for files and private browsing: **export before handing off**.
 Reset round has an inline confirmation.
 
@@ -154,16 +154,16 @@ client and all variant scaffolding.
 
 ## Commands and API
 
-| Command                                         | Result                                                       |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| `init [dir]`                                    | Starter manifest and a lab ignore rule; default `optionlab/` |
-| `build [manifest] [-o file] [--watch] [--open]` | One HTML file, beside the manifest by default                |
-| `check [manifest] [--shots dir]`                | Browser verification and optional PNGs                       |
-| `skill [dir]`                                   | Copy the agent skill; default `.github/skills/optionlab`     |
+| Command                                         | Result                                                     |
+| ----------------------------------------------- | ---------------------------------------------------------- |
+| `init [dir]`                                    | Starter manifest and a lab ignore rule; default `prismal/` |
+| `build [manifest] [-o file] [--watch] [--open]` | One HTML file, beside the manifest by default              |
+| `check [manifest] [--shots dir]`                | Browser verification and optional PNGs                     |
+| `skill [dir]`                                   | Copy the agent skill; default `.github/skills/prismal`     |
 
-Lookup checks `optionlab/optionlab.json`, then `./optionlab.json`. Init and skill never
-overwrite existing files. For Claude Code, use `skill .claude/skills/optionlab`;
-for a user-level Copilot install, use `skill ~/.copilot/skills/optionlab`.
+Lookup checks `prismal/prismal.json`, then `./prismal.json`. Init and skill never
+overwrite existing files. For Claude Code, use `skill .claude/skills/prismal`;
+for a user-level Copilot install, use `skill ~/.copilot/skills/prismal`.
 
 Check needs optional Playwright: `npm i -D playwright && npx playwright install chromium`.
 It resolves your project's Playwright first, then this package's; `playwright-core`

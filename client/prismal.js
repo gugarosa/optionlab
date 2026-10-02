@@ -1,37 +1,37 @@
 // @ts-check
 (() => {
   /** @typedef {{active:boolean, choice:(id:string)=>string, is:(id:string, option:string)=>boolean, state:Record<string, unknown>}} Client */
-  /** @type {Window & typeof globalThis & {optionlab?: Client}} */
+  /** @type {Window & typeof globalThis & {prismal?: Client}} */
   const win = window;
-  if (win.optionlab) return;
+  if (win.prismal) return;
   /** @param {unknown} value @returns {value is Record<string, any>} */
   const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
   let config = {};
   try {
     const parsed = JSON.parse(window.name || "{}");
-    if (record(parsed) && parsed.ol === 1) config = parsed;
+    if (record(parsed) && parsed.prismal === 1) config = parsed;
   } catch {
     // Other applications also use window.name; it is not necessarily JSON.
   }
-  const active = parent !== window && config.ol === 1;
+  const active = parent !== window && config.prismal === 1;
   const choices = Object.create(null);
   const state = Object.create(null);
   for (const [key, value] of new URLSearchParams(location.search)) {
-    if (/^ol\.[a-z0-9-]+$/.test(key)) choices[key.slice(3)] = value;
-    if (key.startsWith("ol.state.")) state[key.slice(9)] = value;
+    if (/^prismal\.[a-z0-9-]+$/.test(key)) choices[key.slice("prismal.".length)] = value;
+    if (key.startsWith("prismal.state.")) state[key.slice("prismal.state.".length)] = value;
   }
   if (record(config.choices)) Object.assign(choices, config.choices);
   if (record(config.state)) Object.assign(state, config.state);
   const choice = (id) => (typeof choices[id] === "string" ? choices[id] : "now");
-  win.optionlab = Object.freeze({ active, choice, is: (id, option) => choice(id) === option, state });
+  win.prismal = Object.freeze({ active, choice, is: (id, option) => choice(id) === option, state });
   for (const id of Object.keys(choices)) {
-    if (/^[a-z0-9-]+$/.test(id)) document.documentElement.setAttribute(`data-ol-${id}`, choice(id));
+    if (/^[a-z0-9-]+$/.test(id)) document.documentElement.setAttribute(`data-prismal-${id}`, choice(id));
   }
   if (!active) return;
   if (typeof config.route === "string" && config.route.startsWith("#") && location.hash !== config.route) {
     location.hash = config.route;
   }
-  const post = (type, payload = {}) => parent.postMessage({ ol: 1, type, ...payload }, "*");
+  const post = (type, payload = {}) => parent.postMessage({ prismal: 1, type, ...payload }, "*");
   const route = () => location.hash || location.pathname;
   const message = (value) => (value instanceof Error ? value.message : String(value));
   addEventListener("error", (event) =>
@@ -55,13 +55,13 @@
   let highlightRequest = null;
   let inventoryKey = "";
   const registry = document.createElement("style");
-  registry.dataset.olOverlay = "";
+  registry.dataset.prismalOverlay = "";
   const rings = new Map();
   const visible = (element) =>
     element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) &&
     element.getClientRects().length > 0;
   const matches = (selector) => [...document.querySelectorAll(selector)].filter(visible);
-  const registered = (element) => getComputedStyle(element).getPropertyValue("--ol-element").trim();
+  const registered = (element) => getComputedStyle(element).getPropertyValue("--prismal-element").trim();
   const copy = (element) =>
     (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim().slice(0, 300);
   function readable(element) {
@@ -97,8 +97,8 @@
       const index = registered(node);
       if (index !== "" && elements[Number(index)]) return { element: node, ...elements[Number(index)] };
     }
-    const named = target.closest("[data-ol-name]");
-    if (named) return { element: named, name: named.getAttribute("data-ol-name"), group: "", what: "" };
+    const named = target.closest("[data-prismal-name]");
+    if (named) return { element: named, name: named.getAttribute("data-prismal-name"), group: "", what: "" };
     const element =
       target.closest("button,a,input,select,textarea,[role],h1,h2,h3,h4,h5,h6,summary,img,label,p,li") ||
       target;
@@ -111,7 +111,7 @@
     return [
       ...new Set(
         matches(
-          "[data-ol-name],button,a,input,select,textarea,[role],h1,h2,h3,h4,h5,h6,summary,img,label,p,li",
+          "[data-prismal-name],button,a,input,select,textarea,[role],h1,h2,h3,h4,h5,h6,summary,img,label,p,li",
         )
           .map(describe)
           .filter((entry) => entry.name === name)
@@ -123,7 +123,7 @@
     const names = [
       ...new Set([
         ...elements.map((entry) => entry.name),
-        ...matches("[data-ol-name]").map((element) => describe(element).name),
+        ...matches("[data-prismal-name]").map((element) => describe(element).name),
         ...(selected ? [selected.name] : []),
       ]),
     ];
@@ -144,14 +144,14 @@
     elements = definitions;
     if (!registry.isConnected) (document.head || document.documentElement).append(registry);
     // The CSS cascade resolves specificity, including :is(), :where() and selector lists.
-    registry.textContent = "*{--ol-element:initial!important}";
+    registry.textContent = "*{--prismal-element:initial!important}";
     elements.forEach((entry, index) => {
       try {
         document.querySelectorAll(entry.selector);
         const rule = registry.sheet.insertRule(`${entry.selector}{}`, registry.sheet.cssRules.length);
         const inserted = registry.sheet.cssRules[rule];
         if (inserted instanceof CSSStyleRule)
-          inserted.style.setProperty("--ol-element", String(index), "important");
+          inserted.style.setProperty("--prismal-element", String(index), "important");
       } catch (error) {
         post("error", { message: `Invalid element selector: ${message(error)}` });
       }
@@ -163,8 +163,8 @@
     let box = rings.get(kind);
     if (!box && target) {
       box = document.createElement("div");
-      box.dataset.olOverlay = "";
-      box.dataset.olRing = kind;
+      box.dataset.prismalOverlay = "";
+      box.dataset.prismalRing = kind;
       box.style.cssText =
         "position:fixed;pointer-events:none;z-index:2147483647;box-sizing:border-box;border:2px solid #7f56d9;border-radius:5px;max-width:100vw;";
       const tag = document.createElement("span");
@@ -289,7 +289,7 @@
     });
   }
   addEventListener("message", (event) => {
-    if (event.source !== parent || !record(event.data) || event.data.ol !== 1) return;
+    if (event.source !== parent || !record(event.data) || event.data.prismal !== 1) return;
     if (event.data.type === "init") {
       register(Array.isArray(event.data.elements) ? event.data.elements : []);
       inspecting = Boolean(event.data.inspect);
@@ -315,7 +315,11 @@
     addEventListener(
       type,
       (event) => {
-        if (!inspecting || !(event.target instanceof Element) || event.target.closest("[data-ol-overlay]"))
+        if (
+          !inspecting ||
+          !(event.target instanceof Element) ||
+          event.target.closest("[data-prismal-overlay]")
+        )
           return;
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -326,7 +330,7 @@
   addEventListener(
     "pointermove",
     (event) => {
-      if (inspecting && event.target instanceof Element && !event.target.closest("[data-ol-overlay]")) {
+      if (inspecting && event.target instanceof Element && !event.target.closest("[data-prismal-overlay]")) {
         hovered = describe(event.target);
         schedule();
       }
@@ -349,7 +353,7 @@
       if (
         records.every((entry) =>
           (entry.target instanceof Element ? entry.target : entry.target.parentElement)?.closest(
-            "[data-ol-overlay]",
+            "[data-prismal-overlay]",
           ),
         )
       )

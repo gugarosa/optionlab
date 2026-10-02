@@ -10,6 +10,10 @@ import test from "node:test";
 
 test("package has no runtime dependencies and supports Node 20", async () => {
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(pkg.name, "prismal");
+  assert.deepEqual(pkg.bin, { prismal: "bin/prismal.js" });
+  assert.deepEqual(pkg.exports, { ".": "./lib/index.js", "./client": "./client/prismal.js" });
+  assert.equal(pkg.repository.url, "https://github.com/gugarosa/prismal.git");
   assert.equal(pkg.dependencies, undefined);
   assert.equal(pkg.engines.node, ">=20");
   assert.equal(pkg.peerDependenciesMeta.playwright.optional, true);
@@ -26,7 +30,7 @@ test("dependency locks use public, integrity-checked package sources", async () 
 });
 test("a packed install builds without dependencies and resolves optional checkers from the host project", async (t) => {
   const exec = promisify(execFile);
-  const root = await mkdtemp(join(tmpdir(), "optionlab-installed-"));
+  const root = await mkdtemp(join(tmpdir(), "prismal-installed-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const project = join(root, "app");
   await mkdir(project);
@@ -48,14 +52,28 @@ test("a packed install builds without dependencies and resolves optional checker
     ],
     { cwd: project },
   );
-  const cli = join(project, "node_modules/optionlab/bin/optionlab.js");
+  const cli = join(project, "node_modules/prismal/bin/prismal.js");
   const run = (args) => exec(process.execPath, [cli, ...args], { cwd: project });
+  const invocation = await exec("npm", ["exec", "--offline", "--no", "--", "prismal", "--version"], {
+    cwd: project,
+  });
+  assert.equal(invocation.stdout.trim(), "0.1.0");
+  const api = await exec(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      'import {build,check,loadManifest} from "prismal"; console.log([build,check,loadManifest].every(value=>typeof value==="function"));',
+    ],
+    { cwd: project },
+  );
+  assert.equal(api.stdout.trim(), "true");
   await run(["init"]);
   await run(["build"]);
-  assert.match(await readFile(join(project, "optionlab/lab.html"), "utf8"), /optionlab-data/);
+  assert.match(await readFile(join(project, "prismal/lab.html"), "utf8"), /prismal-data/);
   await run(["skill"]);
   assert.match(
-    await readFile(join(project, ".github/skills/optionlab/SKILL.md"), "utf8"),
+    await readFile(join(project, ".github/skills/prismal/SKILL.md"), "utf8"),
     /You propose. The user decides/,
   );
   await assert.rejects(
@@ -106,12 +124,12 @@ test("the package contains only intended files, including every required build i
   ]);
   assert.ok(files.every((file) => allowed.has(file.split("/")[0])));
   for (const file of [
-    "bin/optionlab.js",
+    "bin/prismal.js",
     "shell/lab.html",
     "shell/lab.css",
-    "client/optionlab.js",
+    "client/prismal.js",
     "skill/SKILL.md",
-    "schema/optionlab.schema.json",
+    "schema/prismal.schema.json",
     "schema/choices.schema.json",
   ])
     assert.ok(files.includes(file), file);

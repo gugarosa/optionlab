@@ -8,15 +8,15 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
 
-const cli = fileURLToPath(new URL("../bin/optionlab.js", import.meta.url));
+const cli = fileURLToPath(new URL("../bin/prismal.js", import.meta.url));
 const exec = promisify(execFile);
 const run = (args, cwd) => exec(process.execPath, [cli, ...args], { cwd, timeout: 15000 });
 async function fixture(t) {
-  const dir = await mkdtemp(join(tmpdir(), "optionlab cli "));
+  const dir = await mkdtemp(join(tmpdir(), "prismal cli "));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await writeFile(join(dir, "page.html"), "<!doctype html><h1>Alpha</h1>");
   await writeFile(
-    join(dir, "optionlab.json"),
+    join(dir, "prismal.json"),
     JSON.stringify({
       title: "CLI",
       round: 1,
@@ -36,7 +36,7 @@ async function fixture(t) {
 test("CLI parses commands and flags, builds paths with spaces, and fails explicitly", async (t) => {
   const dir = await fixture(t);
   assert.equal((await run(["--version"], dir)).stdout.trim(), "0.1.0");
-  assert.match((await run(["--help"], dir)).stdout, /optionlab check/);
+  assert.match((await run(["--help"], dir)).stdout, /prismal check/);
   assert.match(
     (await run(["build", "-o", "a folder/review.html"], dir)).stdout,
     /1 decisions, 2 options, 2 frames/,
@@ -52,7 +52,7 @@ test("CLI parses commands and flags, builds paths with spaces, and fails explici
   ]) {
     await assert.rejects(
       run(args, dir),
-      (failure) => failure.code === 1 && /^optionlab: /.test(failure.stderr) && error.test(failure.stderr),
+      (failure) => failure.code === 1 && /^prismal: /.test(failure.stderr) && error.test(failure.stderr),
     );
   }
 });

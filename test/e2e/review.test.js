@@ -11,8 +11,8 @@ import { build } from "../../lib/build.js";
 let browser, directory, lab;
 before(async () => {
   browser = await launchBrowser();
-  directory = await mkdtemp(join(tmpdir(), "optionlab-review-"));
-  const result = await build(resolve("examples/lumen/optionlab.json"), {
+  directory = await mkdtemp(join(tmpdir(), "prismal-review-"));
+  const result = await build(resolve("examples/lumen/prismal.json"), {
     output: join(directory, "lab.html"),
   });
   lab = pathToFileURL(result.output).href;

@@ -62,7 +62,7 @@ function failFrame(task, text) {
   finishLoading(task);
   if (task.frame) activateFrame(task);
   task.rec.status.hidden = false;
-  task.rec.status.innerHTML = `<strong>${escapeHTML(text)}</strong><code>${escapeHTML(task.plan.view.url || task.plan.view.file)}</code><ul><li>Start the dev server for live pages.</li><li>Include the optionlab client.</li><li>Check the URL or file source.</li></ul>${button("Try again", "retry", `data-key="${escapeHTML(task.plan.key)}"`)}`;
+  task.rec.status.innerHTML = `<strong>${escapeHTML(text)}</strong><code>${escapeHTML(task.plan.view.url || task.plan.view.file)}</code><ul><li>Start the dev server for live pages.</li><li>Include the Prismal client.</li><li>Check the URL or file source.</li></ul>${button("Try again", "retry", `data-key="${escapeHTML(task.plan.key)}"`)}`;
   task.rec.card.classList.add("frame-error");
 }
 function layoutFrame(task) {
@@ -96,7 +96,7 @@ function layoutFrame(task) {
 }
 function sendFrame(task, type, payload = {}) {
   task.frame?.contentWindow?.postMessage(
-    { ol: 1, type, ...payload },
+    { prismal: 1, type, ...payload },
     task.origin === "null" ? "*" : task.origin,
   );
 }
@@ -121,7 +121,7 @@ function startFrame(task) {
   const file = view.file?.replaceAll("{option}", option);
   const split = file?.indexOf("#") ?? -1;
   frame.name = JSON.stringify({
-    ol: 1,
+    prismal: 1,
     choices: picks,
     state: view.state || {},
     route: split >= 0 ? file.slice(split) : "",
@@ -222,7 +222,7 @@ function syncFrames() {
 }
 addEventListener("message", (event) => {
   const payload = event.data;
-  if (!payload || typeof payload !== "object" || payload.ol !== 1) return;
+  if (!payload || typeof payload !== "object" || payload.prismal !== 1) return;
   const task = [...ownedFrames].find((entry) => entry.frame.contentWindow === event.source);
   if (!task || task.disposed || event.origin !== task.origin) return;
   if (task.rec.pending !== task && task.rec.active !== task) return;

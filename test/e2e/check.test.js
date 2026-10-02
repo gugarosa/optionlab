@@ -14,7 +14,7 @@ const fixtures = join(repository, "test/fixtures");
 
 test("the Lumen example passes every source and generated-lab check", async () => {
   const lines = [];
-  const report = await check(join(repository, "examples/lumen/optionlab.json"), {
+  const report = await check(join(repository, "examples/lumen/prismal.json"), {
     log: (line) => lines.push(line),
   });
 
@@ -26,7 +26,7 @@ test("broken sources report independent browser failures and continue", async (t
   const root = join(fixtures, "check-broken");
   t.after(() => rm(join(root, "lab.html"), { force: true }));
   const lines = [];
-  const report = await check(join(root, "optionlab.json"), { log: (line) => lines.push(line) });
+  const report = await check(join(root, "prismal.json"), { log: (line) => lines.push(line) });
   const text = report.problems.map((problem) => `${problem.context}: ${problem.message}`).join("\n");
 
   assert.equal(report.frames, 14);
@@ -43,18 +43,18 @@ test("broken sources report independent browser failures and continue", async (t
   assert.match(text, /element\/Absent control: No inspect route matches its selector/);
   assert.equal(lines.length, report.problems.length + 1);
   assert.equal(
-    (await readdir(root)).some((name) => name.startsWith(".optionlab-check-")),
+    (await readdir(root)).some((name) => name.startsWith(".prismal-check-")),
     false,
   );
 });
 
 test("shots use stable decision-option-view filenames", async (t) => {
   const root = join(fixtures, "check-shots");
-  const shots = await mkdtemp(join(repository, ".optionlab-shots-"));
+  const shots = await mkdtemp(join(repository, ".prismal-shots-"));
   t.after(() => rm(shots, { recursive: true, force: true }));
   t.after(() => rm(join(root, "lab.html"), { force: true }));
 
-  const report = await check(join(root, "optionlab.json"), { shots, log: () => {} });
+  const report = await check(join(root, "prismal.json"), { shots, log: () => {} });
   assert.equal(report.failures, 0);
   assert.deepEqual((await readdir(shots)).sort(), [
     "color-a-1.png",
@@ -70,11 +70,11 @@ test("shots use stable decision-option-view filenames", async (t) => {
   }
 });
 test("the CLI exits 1 for a broken option rather than reporting success", async (t) => {
-  const root = await mkdtemp(join(repository, ".optionlab-cli-check-"));
+  const root = await mkdtemp(join(repository, ".prismal-cli-check-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, "page.html"), "<!doctype html><h1>Exactly the same</h1>");
   await writeFile(
-    join(root, "optionlab.json"),
+    join(root, "prismal.json"),
     JSON.stringify({
       title: "Same",
       round: 1,
@@ -90,12 +90,12 @@ test("the CLI exits 1 for a broken option rather than reporting success", async 
     }),
   );
   await assert.rejects(
-    promisify(execFile)(process.execPath, [join(repository, "bin/optionlab.js"), "check"], { cwd: root }),
+    promisify(execFile)(process.execPath, [join(repository, "bin/prismal.js"), "check"], { cwd: root }),
     (error) => error.code === 1 && /byte-identical to Now/.test(error.stdout),
   );
 });
 test("failed HTTP resources and disconnected requests fail the round", async (t) => {
-  const root = await mkdtemp(join(repository, ".optionlab-network-"));
+  const root = await mkdtemp(join(repository, ".prismal-network-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const server = createServer((request, response) => {
     if (request.url === "/disconnected") {
@@ -110,10 +110,10 @@ test("failed HTTP resources and disconnected requests fail the round", async (t)
   const base = `http://127.0.0.1:${server.address().port}`;
   await writeFile(
     join(root, "page.html"),
-    `<!doctype html><style>html[data-ol-page=a]body{background:#ddd}</style><h1>Broken assets</h1><img src="${base}/missing"><img src="${base}/disconnected">`,
+    `<!doctype html><style>html[data-prismal-page=a]body{background:#ddd}</style><h1>Broken assets</h1><img src="${base}/missing"><img src="${base}/disconnected">`,
   );
   await writeFile(
-    join(root, "optionlab.json"),
+    join(root, "prismal.json"),
     JSON.stringify({
       title: "Network",
       round: 1,
@@ -128,7 +128,7 @@ test("failed HTTP resources and disconnected requests fail the round", async (t)
       ],
     }),
   );
-  const report = await check(join(root, "optionlab.json"), { log: () => {} });
+  const report = await check(join(root, "prismal.json"), { log: () => {} });
   const messages = report.problems.map((entry) => entry.message).join("\n");
   assert.ok(report.failures > 0);
   assert.match(messages, /HTTP resource failed: 404/);

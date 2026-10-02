@@ -14,9 +14,9 @@ let inFlight = 0,
   maximum = 0,
   lateRequests = 0;
 before(async () => {
-  const client = await readFile(new URL("../../client/optionlab.js", import.meta.url), "utf8");
+  const client = await readFile(new URL("../../client/prismal.js", import.meta.url), "utf8");
   const html =
-    '<!doctype html><script src="/client"></script><style>body{margin:0}.hero{padding:16px}</style><main class="hero"><h1></h1></main><script>document.title=document.querySelector("h1").textContent=optionlab.choice("hero")</script>';
+    '<!doctype html><script src="/client"></script><style>body{margin:0}.hero{padding:16px}</style><main class="hero"><h1></h1></main><script>document.title=document.querySelector("h1").textContent=prismal.choice("hero")</script>';
   server = createServer((request, response) => {
     if (request.url === "/client") {
       response.writeHead(200, { "Content-Type": "text/javascript" });
@@ -49,7 +49,7 @@ before(async () => {
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   origin = `http://127.0.0.1:${server.address().port}`;
-  directory = await mkdtemp(join(tmpdir(), "optionlab-frames-"));
+  directory = await mkdtemp(join(tmpdir(), "prismal-frames-"));
   browser = await launchBrowser();
 });
 after(async () => {
@@ -92,7 +92,7 @@ async function openLab(endpoint, count) {
       const frame = [...document.querySelectorAll("iframe")].find(
         (entry) => entry.contentWindow === event.source,
       );
-      if (frame && event.data?.ol === 1 && event.data.type === "ready")
+      if (frame && event.data?.prismal === 1 && event.data.type === "ready")
         window.readyTitles.set(frame, event.data.title);
     });
   });
@@ -127,7 +127,9 @@ test("lazy frames load two at a time, survive supersession, and reject foreign m
     [...document.querySelectorAll("iframe")].map((frame) => window.readyTitles.get(frame)),
   );
   assert.deepEqual(values, ["a", "a", "a", "a"]);
-  await page.evaluate(() => window.postMessage({ ol: 1, type: "error", message: "Not an owned frame" }, "*"));
+  await page.evaluate(() =>
+    window.postMessage({ prismal: 1, type: "error", message: "Not an owned frame" }, "*"),
+  );
   await page.evaluate(() => new Promise(requestAnimationFrame));
   assert.equal(await page.locator(".frame-error").count(), 0);
   await page.goto(page.url().split("#")[0] + "#/start");

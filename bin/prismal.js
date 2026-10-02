@@ -9,14 +9,14 @@ import { build } from "../lib/build.js";
 import { init } from "../lib/init.js";
 import { skill } from "../lib/skill.js";
 
-const help = `optionlab - live design options, one choices file
+const help = `prismal - live design options, one choices file
 
-  optionlab init [dir]
-  optionlab build [manifest] [-o file] [--watch] [--open]
-  optionlab check [manifest] [--shots dir]
-  optionlab skill [dir]
-  optionlab --help
-  optionlab --version`;
+  prismal init [dir]
+  prismal build [manifest] [-o file] [--watch] [--open]
+  prismal check [manifest] [--shots dir]
+  prismal skill [dir]
+  prismal --help
+  prismal --version`;
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -39,7 +39,7 @@ async function main() {
   }
   const [command, input] = positionals;
   if (!["init", "build", "check", "skill"].includes(command))
-    throw new Error(`Unknown command "${command}". Run optionlab --help.`);
+    throw new Error(`Unknown command "${command}". Run prismal --help.`);
   if (positionals.length > 2) throw new Error("Too many arguments.");
   const allowed = { build: ["output", "watch", "open"], check: ["shots"], init: [], skill: [] }[command];
   for (const flag of Object.keys(values)) {
@@ -48,7 +48,7 @@ async function main() {
   }
   if (command === "init") {
     console.log(
-      `Created ${await init(input)}\nCopy optionlab/client into your app's public directory and include <script src="/optionlab.js"></script> before app scripts, in development only.\nImplement the starter variants, then build and check the round.`,
+      `Created ${await init(input)}\nCopy prismal/client into your app's public directory and include <script src="/prismal.js"></script> before app scripts, in development only.\nImplement the starter variants, then build and check the round.`,
     );
     return;
   }
@@ -103,7 +103,7 @@ async function main() {
           clearTimeout(timer);
           timer = setTimeout(update, 100);
         });
-        watcher.on("error", (error) => console.error(`optionlab: watch: ${error.message}`));
+        watcher.on("error", (error) => console.error(`prismal: watch: ${error.message}`));
         return watcher;
       });
     };
@@ -116,7 +116,7 @@ async function main() {
       try {
         attach((await rebuild()).dependencies);
       } catch (error) {
-        console.error(`optionlab: ${error.message}`);
+        console.error(`prismal: ${error.message}`);
       } finally {
         working = false;
         if (again && !stopped) {
@@ -136,6 +136,6 @@ async function main() {
   }
 }
 main().catch((error) => {
-  console.error(`optionlab: ${error.message}`);
+  console.error(`prismal: ${error.message}`);
   process.exitCode = 1;
 });

@@ -60,7 +60,7 @@ Use lowercase kebab-case for new multiword files. Never add numbered replacement
 - Catch an error only to recover deliberately, add context with `cause`, report at an application boundary, or clean up.
   Keep unexpected errors visible. Expected absence must be distinguished by its actual error code.
 - Error messages name the failing operation and relevant path, field or value. Keep the established path-style
-  validator messages and `optionlab: <message>` CLI boundary; do not apply a second punctuation dialect mechanically.
+  validator messages and `prismal: <message>` CLI boundary; do not apply a second punctuation dialect mechanically.
 - Libraries return data or throw. Terminal output belongs to the CLI, apart from the checker's documented `log`
   callback. Browser failures use the existing toast, frame-status or message channel.
 - Every timer, observer, watcher, frame and temporary resource has an owner and a cleanup path. Release load permits

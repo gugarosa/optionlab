@@ -10,7 +10,7 @@ const repository = fileURLToPath(new URL("..", import.meta.url));
 
 /** @param {import("node:test").TestContext} t */
 async function workspace(t) {
-  const root = await mkdtemp(join(repository, ".optionlab-build-"));
+  const root = await mkdtemp(join(repository, ".prismal-build-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   return root;
 }
@@ -68,7 +68,7 @@ test("build deduplicates expanded files and safely assembles the lab", async (t)
     quietPath,
     '<script>const literal = "<head><base href=\'literal\'>"; window.appStarted = true;</script><main data-copy="$& $`">\u2028\u2029 Quiet</main>',
   );
-  const manifestPath = join(root, "optionlab.json");
+  const manifestPath = join(root, "prismal.json");
   await writeManifest(manifestPath, buildManifest());
 
   const result = await build(manifestPath);
@@ -99,7 +99,7 @@ test("build deduplicates expanded files and safely assembles the lab", async (t)
   assert.ok(result.data.files[1].startsWith('<head><base href="about:srcdoc">'));
   assert.ok(result.data.files[1].includes("const literal = \"<head><base href='literal'>\""));
 
-  const dataMatch = html.match(/<script type="application\/json" id="optionlab-data">([\s\S]*?)<\/script>/);
+  const dataMatch = html.match(/<script type="application\/json" id="prismal-data">([\s\S]*?)<\/script>/);
   assert.ok(dataMatch);
   const encodedData = dataMatch[1];
   assert.equal(encodedData.includes("<"), false);
@@ -109,14 +109,14 @@ test("build deduplicates expanded files and safely assembles the lab", async (t)
   assert.ok(encodedData.includes("\\u2028"));
   assert.ok(encodedData.includes("\\u2029"));
   assert.deepEqual(JSON.parse(encodedData), result.data);
-  assert.ok(html.includes("<title>&lt;Review&gt; $&amp; $` · optionlab</title>"));
-  assert.equal(html.includes("<!--OPTIONLAB_"), false);
+  assert.ok(html.includes("<title>&lt;Review&gt; $&amp; $` · Prismal</title>"));
+  assert.equal(html.includes("<!--PRISMAL_"), false);
 });
 
 test("build creates explicit output directories and protects every input", async (t) => {
   const root = await workspace(t);
   const source = join(root, "page.html");
-  const manifestPath = join(root, "optionlab.json");
+  const manifestPath = join(root, "prismal.json");
   await writeFile(source, "<!doctype html><p>Page</p>");
   await writeManifest(manifestPath, {
     title: "Review",
@@ -149,7 +149,7 @@ test("build creates explicit output directories and protects every input", async
 
 test("build gives source paths enough context to fix missing files", async (t) => {
   const root = await workspace(t);
-  const manifestPath = join(root, "optionlab.json");
+  const manifestPath = join(root, "prismal.json");
   await writeManifest(manifestPath, {
     title: "Review",
     round: 1,

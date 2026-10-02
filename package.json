@@ -1,14 +1,14 @@
 {
-  "name": "optionlab",
+  "name": "prismal",
   "version": "0.1.0",
   "description": "A design lab for agent-proposed UI options: see them live in your real app, pick, and hand the choices back.",
   "type": "module",
   "bin": {
-    "optionlab": "bin/optionlab.js"
+    "prismal": "bin/prismal.js"
   },
   "exports": {
     ".": "./lib/index.js",
-    "./client": "./client/optionlab.js"
+    "./client": "./client/prismal.js"
   },
   "files": [
     "bin",
@@ -29,7 +29,7 @@
     "lint:docs": "markdownlint-cli2",
     "test": "node --test test/*.test.js",
     "test:e2e": "node --test test/e2e/*.test.js",
-    "check:example": "node bin/optionlab.js check examples/lumen/optionlab.json",
+    "check:example": "node bin/prismal.js check examples/lumen/prismal.json",
     "check:types": "tsc --allowJs --checkJs --noEmit --target es2022 --lib es2022,dom,dom.iterable --module nodenext --moduleResolution nodenext --moduleDetection legacy --skipLibCheck bin/*.js lib/*.js client/*.js shell/*.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -56,7 +56,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gugarosa/optionlab.git"
+    "url": "https://github.com/gugarosa/prismal.git"
   },
   "keywords": [
     "design",

@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "optionlab choices",
-  "description": "Selections and notes exported from one optionlab review round.",
+  "title": "Prismal choices",
+  "description": "Selections and notes exported from one prismal review round.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "optionlab",
+    "prismal",
     "title",
     "round",
     "exported",
@@ -20,7 +20,7 @@
     "$schema": {
       "type": "string"
     },
-    "optionlab": {
+    "prismal": {
       "const": 1
     },
     "title": {
