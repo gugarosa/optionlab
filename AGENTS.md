@@ -1,34 +1,19 @@
-# Contributing to optionlab
+# Working on Prismal
 
-## Map
+Read [CONVENTIONS.md](CONVENTIONS.md) before changing this repository. It is the single source of contributor rules,
+ownership boundaries, documentation style and the change workflow.
 
-- `bin/optionlab.js`: Node CLI, argument parsing and terminal output.
-- `lib/`: manifest validation, HTML build, browser checker and scaffolding.
-- `shell/`: vanilla HTML/CSS/JS, concatenated into a single lab at build time.
-- `client/optionlab.js`: development-only page client; dependency-free IIFE.
-- `schema/`: editor hints for manifests and exported choices.
-- `skill/SKILL.md`: the coding agent's round workflow.
-- `examples/lumen/`: fictional, offline, self-contained demonstration.
-- `test/`: Node unit tests; `test/e2e/`: Playwright browser tests.
+Read the [README](README.md) for user-facing behavior and [architecture](docs/architecture.md) when changing the
+build, shared shell scope, frame protocol or persisted choices. The [agent skill](skill/SKILL.md) teaches consumers
+to run design rounds; it is not this repository's coding policy.
 
 ## Commands
 
-`npm ci`, `npm test`, `npm run check:types`, `npm run test:e2e`, `npm run check:example`,
-`npm run format:check`, `npm pack --dry-run`.
-Install test browsers with `npx playwright install chromium`.
-Type checking uses JSDoc and `--noEmit`; there is no compilation step.
-`OPTIONLAB_BROWSER=firefox` or `webkit` selects another test engine;
-`OPTIONLAB_CHANNEL=msedge` selects installed Edge. `UPDATE_SHOTS=1` refreshes README media.
+`npm run verify` checks code, documentation and Node contracts. `npm run verify:browser` checks browser workflows.
+Dependency and browser setup live in the [README](README.md#tests).
 
-## Rules
+Use focused `node --test` selections while iterating. `npm run format` applies formatting; `npm run lint:fix`
+applies safe JavaScript lint fixes. Keep both separate from the read-only verification commands.
 
-- Zero runtime dependencies. Modern JavaScript with JSDoc and `// @ts-check`.
-- No framework, bundler, compile step, adapters or plugin system.
-- Keep runtime code in `bin/`, `lib/`, `shell/` and `client/` around 3,500 lines.
-- Preserve the single-manifest, single-HTML, single-choices-file contract.
-- Keep the hand-written validator and JSON schema in agreement.
-- Use real buttons, accessible names and keyboard navigation. Respect reduced motion.
-- Report errors explicitly. Do not silently drop a failed frame or invalid input.
-- Use fictional example data only. Never include credentials or private source material.
-- Keep the README short and the skill actionable; avoid process documents.
-- Run the relevant tests before committing. Do not publish or merge without approval.
+`PRISMAL_BROWSER=firefox` or `webkit` selects another test engine; `PRISMAL_CHANNEL=msedge` selects installed Edge.
+`UPDATE_SHOTS=1 npm run test:e2e` refreshes the fictional README images. Keep generated labs out of git.

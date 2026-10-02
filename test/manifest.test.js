@@ -1,7 +1,7 @@
 // @ts-check
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { loadManifest, normalizeManifest } from "../lib/manifest.js";
@@ -27,7 +27,7 @@ function minimalManifest() {
 test("normalizeManifest validates and fills the complete manifest shape", () => {
   const state = { open: true, count: 2, nested: [null, "safe"] };
   const manifest = normalizeManifest({
-    $schema: "./schema/optionlab.schema.json",
+    $schema: "./schema/prismal.schema.json",
     title: "Lumen review",
     round: 2,
     about: "Fictional notes.",
@@ -222,7 +222,7 @@ test("normalizeManifest reports exact paths for invalid input", () => {
 });
 
 test("loadManifest reads explicit paths and distinguishes lookup failures", async (t) => {
-  const root = await mkdtemp(join(repository, ".optionlab-manifest-"));
+  const root = await mkdtemp(join(repository, ".prismal-manifest-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const explicit = join(root, "explicit.json");
   await writeFile(explicit, JSON.stringify(minimalManifest()));
@@ -235,22 +235,19 @@ test("loadManifest reads explicit paths and distinguishes lookup failures", asyn
   await writeFile(explicit, JSON.stringify({ title: "", round: 1, decisions: [] }));
   await assert.rejects(loadManifest(explicit), new RegExp(`^Error: Invalid manifest ${explicit}: title:`));
 
-  const nested = join(root, "optionlab");
+  const nested = join(root, "prismal");
   await mkdir(nested);
-  await writeFile(join(root, "optionlab.json"), JSON.stringify({ title: "Root", round: 1, decisions: [] }));
-  await writeFile(
-    join(nested, "optionlab.json"),
-    JSON.stringify({ title: "Nested", round: 1, decisions: [] }),
-  );
+  await writeFile(join(root, "prismal.json"), JSON.stringify({ title: "Root", round: 1, decisions: [] }));
+  await writeFile(join(nested, "prismal.json"), JSON.stringify({ title: "Nested", round: 1, decisions: [] }));
   const previous = process.cwd();
   try {
     process.chdir(root);
     assert.equal((await loadManifest()).manifest.title, "Nested");
-    await writeFile(join(nested, "optionlab.json"), "{");
+    await writeFile(join(nested, "prismal.json"), "{");
     await assert.rejects(loadManifest(), /^Error: Invalid JSON in manifest /);
-    await unlink(join(nested, "optionlab.json"));
+    await unlink(join(nested, "prismal.json"));
     assert.equal((await loadManifest()).manifest.title, "Root");
-    await unlink(join(root, "optionlab.json"));
+    await unlink(join(root, "prismal.json"));
     await assert.rejects(loadManifest(), /^Error: Manifest not found\. Looked for /);
   } finally {
     process.chdir(previous);

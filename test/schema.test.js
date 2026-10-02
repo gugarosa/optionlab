@@ -5,7 +5,7 @@ import test from "node:test";
 import { normalizeManifest } from "../lib/manifest.js";
 
 const manifestSchema = JSON.parse(
-  await readFile(new URL("../schema/optionlab.schema.json", import.meta.url), "utf8"),
+  await readFile(new URL("../schema/prismal.schema.json", import.meta.url), "utf8"),
 );
 const choicesSchema = JSON.parse(
   await readFile(new URL("../schema/choices.schema.json", import.meta.url), "utf8"),
@@ -195,7 +195,7 @@ test("schemas use draft 2020-12 definitions and reject undeclared fields", () =>
 
 test("choices schema mirrors the complete export contract", () => {
   const choices = {
-    optionlab: 1,
+    prismal: 1,
     title: "Review",
     round: 1,
     exported: "2026-10-02T01:38:32.632Z",
@@ -235,7 +235,7 @@ test("choices schema mirrors the complete export contract", () => {
     notes: "",
   };
   assert.equal(valid(choicesSchema, choices), true);
-  assert.equal(valid(choicesSchema, { ...choices, optionlab: 2 }), false);
+  assert.equal(valid(choicesSchema, { ...choices, prismal: 2 }), false);
   assert.equal(valid(choicesSchema, { ...choices, exported: "yesterday" }), false);
   assert.equal(valid(choicesSchema, { ...choices, extra: true }), false);
   assert.equal(

@@ -2,11 +2,11 @@
 import { chromium, firefox, webkit } from "playwright";
 
 export function launchBrowser() {
-  const engine = { chromium, firefox, webkit }[process.env.OPTIONLAB_BROWSER || "chromium"];
-  if (!engine) throw new Error("Unknown OPTIONLAB_BROWSER");
+  const engine = { chromium, firefox, webkit }[process.env.PRISMAL_BROWSER || "chromium"];
+  if (!engine) throw new Error("Unknown PRISMAL_BROWSER");
   return engine.launch({
-    ...(process.env.OPTIONLAB_CHANNEL ? { channel: process.env.OPTIONLAB_CHANNEL } : {}),
-    ...(process.env.OPTIONLAB_EXECUTABLE ? { executablePath: process.env.OPTIONLAB_EXECUTABLE } : {}),
+    ...(process.env.PRISMAL_CHANNEL ? { channel: process.env.PRISMAL_CHANNEL } : {}),
+    ...(process.env.PRISMAL_EXECUTABLE ? { executablePath: process.env.PRISMAL_EXECUTABLE } : {}),
   });
 }
 

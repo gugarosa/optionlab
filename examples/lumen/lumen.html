@@ -99,14 +99,14 @@
       .nav-menu {
         display: none;
       }
-      html[data-ol-nav="a"] .site-nav {
+      html[data-prismal-nav="a"] .site-nav {
         background: #f3f6f3;
         border: 0;
       }
-      html[data-ol-nav="a"] .nav-links {
+      html[data-prismal-nav="a"] .nav-links {
         margin-right: auto;
       }
-      html[data-ol-nav="b"] .site-nav {
+      html[data-prismal-nav="b"] .site-nav {
         min-height: 76px;
         padding-top: 16px;
         padding-bottom: 16px;
@@ -600,16 +600,16 @@
         .nav-search input {
           font-size: 12px;
         }
-        html[data-ol-nav="a"] .site-nav {
+        html[data-prismal-nav="a"] .site-nav {
           flex-wrap: wrap;
         }
-        html[data-ol-nav="a"] .nav-links {
+        html[data-prismal-nav="a"] .nav-links {
           order: 3;
           width: 100%;
           margin-right: 0;
           padding-top: 8px;
         }
-        html[data-ol-nav="b"] .nav-links {
+        html[data-prismal-nav="b"] .nav-links {
           display: none;
         }
         .hero {
@@ -737,7 +737,7 @@
     <script>
       const leaf =
         '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 4c-9-1-16 2-16 8a7 7 0 0 0 7 7c6 0 10-7 9-15Z"/><path d="M4 20 15 9"/></svg>';
-      const option = (id) => window.optionlab?.choice(id) || "now";
+      const option = (id) => window.prismal?.choice(id) || "now";
       const demo = { billing: "monthly", plan: 1 };
       const plans = [
         {
@@ -769,7 +769,7 @@
       const intro =
         '<p class="intro">Catch the passing thought. Connect the dots later. Lumen is a quiet place for everything taking shape.</p>';
       const cta = '<a href="#/pricing" class="button primary-action">Find your space</a>';
-      const workspace = `<div class="workspace" aria-label="Sample notebook"><aside><strong>Your workspace</strong><span>All notes</span><span>Small ideas</span><span>Field notes</span><span>For later</span></aside><article class="note-paper" data-ol-name="Sample note"><span class="paper-meta">FIELD NOTES / OCTOBER 02</span><h3>Things I noticed on the way</h3><p>The light in the kitchen at four. A sentence from a book. A question worth keeping.</p><ul><li>Take the longer way home</li><li>Leave a little room</li></ul></article></div>`;
+      const workspace = `<div class="workspace" aria-label="Sample notebook"><aside><strong>Your workspace</strong><span>All notes</span><span>Small ideas</span><span>Field notes</span><span>For later</span></aside><article class="note-paper" data-prismal-name="Sample note"><span class="paper-meta">FIELD NOTES / OCTOBER 02</span><h3>Things I noticed on the way</h3><p>The light in the kitchen at four. A sentence from a book. A question worth keeping.</p><ul><li>Take the longer way home</li><li>Leave a little room</li></ul></article></div>`;
       function hero() {
         const id = option("hero");
         if (id === "a")
@@ -806,7 +806,7 @@
         document.getElementById("app").innerHTML =
           navigation() +
           (location.hash.startsWith("#/pricing") ? pricing() : hero() + collection) +
-          "<footer><span>Lumen. A little room to think.</span><span>Fictional product demo for optionlab.</span></footer>";
+          "<footer><span>Lumen. A little room to think.</span><span>Fictional product demo for Prismal.</span></footer>";
         document.title = location.hash.startsWith("#/pricing")
           ? "Plans / Lumen"
           : "Lumen / A little room to think";

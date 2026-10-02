@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/optionlab.schema.json",
+  "$schema": "../../schema/prismal.schema.json",
   "title": "Lumen",
   "round": 1,
   "about": "A quieter home for notes, ideas, and things taking shape. This round explores the opening, the plans, and the navigation. Try the pages, like what is worth keeping, and pick what feels right.",

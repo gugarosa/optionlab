@@ -19,10 +19,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm test
-      - run: npm run check:types
-      - run: npm run format:check
+      - run: npm run verify
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - run: npm run check:example
+      - run: npm run verify:browser
       - run: npm pack --dry-run

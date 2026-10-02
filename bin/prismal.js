@@ -9,14 +9,14 @@ import { build } from "../lib/build.js";
 import { init } from "../lib/init.js";
 import { skill } from "../lib/skill.js";
 
-const help = `optionlab - live design options, one choices file
+const help = `prismal - live design options, one choices file
 
-  optionlab init [dir]
-  optionlab build [manifest] [-o file] [--watch] [--open]
-  optionlab check [manifest] [--shots dir]
-  optionlab skill [dir]
-  optionlab --help
-  optionlab --version`;
+  prismal init [dir]
+  prismal build [manifest] [-o file] [--watch] [--open]
+  prismal check [manifest] [--shots dir]
+  prismal skill [dir]
+  prismal --help
+  prismal --version`;
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -39,7 +39,7 @@ async function main() {
   }
   const [command, input] = positionals;
   if (!["init", "build", "check", "skill"].includes(command))
-    throw new Error(`Unknown command "${command}". Run optionlab --help.`);
+    throw new Error(`Unknown command "${command}". Run prismal --help.`);
   if (positionals.length > 2) throw new Error("Too many arguments.");
   const allowed = { build: ["output", "watch", "open"], check: ["shots"], init: [], skill: [] }[command];
   for (const flag of Object.keys(values)) {
@@ -48,7 +48,7 @@ async function main() {
   }
   if (command === "init") {
     console.log(
-      `Created ${await init(input)}\nCopy optionlab/client into your app's public directory and include <script src="/optionlab.js"></script> before app scripts, in development only.\nImplement the starter variants, then build and check the round.`,
+      `Created ${await init(input)}\nCopy prismal/client into your app's public directory and include <script src="/prismal.js"></script> before app scripts, in development only.\nImplement the starter variants, then build and check the round.`,
     );
     return;
   }
@@ -62,16 +62,16 @@ async function main() {
     process.exitCode = result.failures ? 1 : 0;
     return;
   }
-  async function rebuild() {
-    const result = await build(input, { output: values.output });
+  /** @param {Awaited<ReturnType<typeof build>>} result */
+  function reportBuild(result) {
     const { decisions, options, frames, bytes } = result.stats;
     const mark = process.stdout.isTTY ? "\u001b[32m\u2713\u001b[0m " : "";
     console.log(
       `${mark}${decisions} decisions, ${options} options, ${frames} frames -> ${result.output} (${Math.ceil(bytes / 1024)} KB)`,
     );
-    return result;
   }
-  const result = await rebuild();
+  const result = await build(input, { output: values.output });
+  if (!values.watch) reportBuild(result);
   if (values.open) {
     const [program, args] =
       process.platform === "darwin"
@@ -88,35 +88,47 @@ async function main() {
     });
   }
   if (values.watch) {
-    let watchers = [];
+    /** @type {Map<string, import("node:fs").FSWatcher>} */
+    const watchers = new Map();
+    let files = new Set(result.dependencies);
     let timer;
     let working = false;
     let again = false;
     let stopped = false;
+    /** @param {string[]} dependencies */
     const attach = (dependencies) => {
       if (stopped) return;
-      for (const watcher of watchers) watcher.close();
-      const files = new Set(dependencies);
-      watchers = [...new Set(dependencies.map(dirname))].map((dir) => {
+      files = new Set(dependencies);
+      const directories = new Set(dependencies.map(dirname));
+      for (const dir of directories) {
+        if (watchers.has(dir)) continue;
         const watcher = watch(dir, (_event, name) => {
           if (name && !files.has(resolve(dir, String(name)))) return;
           clearTimeout(timer);
           timer = setTimeout(update, 100);
         });
-        watcher.on("error", (error) => console.error(`optionlab: watch: ${error.message}`));
-        return watcher;
-      });
+        watcher.on("error", (error) => console.error(`prismal: watch: ${error.message}`));
+        watchers.set(dir, watcher);
+      }
+      for (const [dir, watcher] of watchers) {
+        if (directories.has(dir)) continue;
+        watcher.close();
+        watchers.delete(dir);
+      }
     };
     const update = async () => {
+      if (stopped) return;
       if (working) {
         again = true;
         return;
       }
       working = true;
       try {
-        attach((await rebuild()).dependencies);
+        const rebuilt = await build(input, { output: values.output });
+        attach(rebuilt.dependencies);
+        if (!stopped) reportBuild(rebuilt);
       } catch (error) {
-        console.error(`optionlab: ${error.message}`);
+        console.error(`prismal: ${error.message}`);
       } finally {
         working = false;
         if (again && !stopped) {
@@ -126,16 +138,17 @@ async function main() {
       }
     };
     attach(result.dependencies);
+    reportBuild(result);
     const close = () => {
       stopped = true;
       clearTimeout(timer);
-      for (const watcher of watchers) watcher.close();
+      for (const watcher of watchers.values()) watcher.close();
     };
     process.once("SIGINT", close);
     process.once("SIGTERM", close);
   }
 }
 main().catch((error) => {
-  console.error(`optionlab: ${error.message}`);
+  console.error(`prismal: ${error.message}`);
   process.exitCode = 1;
 });

@@ -12,10 +12,10 @@ test(
   "capture the fictional Lumen lab for the README and review",
   { skip: process.env.UPDATE_SHOTS !== "1" },
   async () => {
-    const built = await build(resolve("examples/lumen/optionlab.json"));
+    const built = await build(resolve("examples/lumen/prismal.json"));
     const browser = await launchBrowser();
     const media = resolve("media");
-    const downloads = join(homedir(), "Downloads", "optionlab");
+    const downloads = join(homedir(), "Downloads", "prismal");
     await Promise.all([mkdir(media, { recursive: true }), mkdir(downloads, { recursive: true })]);
     try {
       for (const [name, route, width] of [

@@ -1,22 +1,22 @@
 // @ts-check
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
-import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
 
-const cli = fileURLToPath(new URL("../bin/optionlab.js", import.meta.url));
+const cli = fileURLToPath(new URL("../bin/prismal.js", import.meta.url));
 const exec = promisify(execFile);
 const run = (args, cwd) => exec(process.execPath, [cli, ...args], { cwd, timeout: 15000 });
 async function fixture(t) {
-  const dir = await mkdtemp(join(tmpdir(), "optionlab cli "));
+  const dir = await mkdtemp(join(tmpdir(), "prismal cli "));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await writeFile(join(dir, "page.html"), "<!doctype html><h1>Alpha</h1>");
   await writeFile(
-    join(dir, "optionlab.json"),
+    join(dir, "prismal.json"),
     JSON.stringify({
       title: "CLI",
       round: 1,
@@ -36,7 +36,7 @@ async function fixture(t) {
 test("CLI parses commands and flags, builds paths with spaces, and fails explicitly", async (t) => {
   const dir = await fixture(t);
   assert.equal((await run(["--version"], dir)).stdout.trim(), "0.1.0");
-  assert.match((await run(["--help"], dir)).stdout, /optionlab check/);
+  assert.match((await run(["--help"], dir)).stdout, /prismal check/);
   assert.match(
     (await run(["build", "-o", "a folder/review.html"], dir)).stdout,
     /1 decisions, 2 options, 2 frames/,
@@ -52,7 +52,7 @@ test("CLI parses commands and flags, builds paths with spaces, and fails explici
   ]) {
     await assert.rejects(
       run(args, dir),
-      (failure) => failure.code === 1 && /^optionlab: /.test(failure.stderr) && error.test(failure.stderr),
+      (failure) => failure.code === 1 && /^prismal: /.test(failure.stderr) && error.test(failure.stderr),
     );
   }
 });
@@ -94,9 +94,22 @@ test("watch follows source edits and atomic replacement without watching its own
   await rename(join(dir, "replacement.html"), join(dir, "page.html"));
   await until(2);
   assert.match(await readFile(join(dir, "lab.html"), "utf8"), /Beta/);
-  await writeFile(join(dir, "page.html"), "<!doctype html><h1>Gamma</h1>");
-  await until(3);
-  assert.match(await readFile(join(dir, "lab.html"), "utf8"), /Gamma/);
+  for (const [index, label] of ["Gamma", "Delta", "Epsilon"].entries()) {
+    await writeFile(join(dir, "page.html"), `<!doctype html><h1>${label}</h1>`);
+    await until(index + 3);
+    assert.ok((await readFile(join(dir, "lab.html"), "utf8")).includes(label));
+  }
+  await mkdir(join(dir, "second"));
+  await writeFile(join(dir, "second/page.html"), "<!doctype html><h1>Zeta</h1>");
+  const manifestPath = join(dir, "prismal.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.decisions[0].views[0].file = "second/page.html";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  await until(6);
+  assert.match(await readFile(join(dir, "lab.html"), "utf8"), /Zeta/);
+  await writeFile(join(dir, "second/page.html"), "<!doctype html><h1>Eta</h1>");
+  await until(7);
+  assert.match(await readFile(join(dir, "lab.html"), "utf8"), /Eta/);
   assert.equal(errors, "");
   const exited = new Promise((done) => child.once("exit", done));
   child.kill("SIGTERM");

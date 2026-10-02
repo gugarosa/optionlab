@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "optionlab manifest",
+  "title": "Prismal manifest",
   "description": "One review round, its live alternatives, and optional review prompts.",
   "type": "object",
   "additionalProperties": false,

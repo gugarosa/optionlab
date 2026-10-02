@@ -1,7 +1,7 @@
 // @ts-check
-const data = JSON.parse(document.getElementById("optionlab-data").textContent);
+const data = JSON.parse(document.getElementById("prismal-data").textContent);
 const manifest = data.manifest;
-const storageKey = `optionlab:${manifest.title}:r${manifest.round}`;
+const storageKey = `prismal:${manifest.title}:r${manifest.round}`;
 const stage = document.getElementById("stage");
 const rail = document.getElementById("rail");
 const escapeHTML = (value) =>
@@ -28,7 +28,7 @@ function toast(text, error = false) {
 }
 function freshChoices() {
   return {
-    optionlab: 1,
+    prismal: 1,
     title: manifest.title,
     round: manifest.round,
     exported: "",
@@ -68,7 +68,7 @@ function parseChoices(raw) {
   const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
   if (
     !object(raw) ||
-    raw.optionlab !== 1 ||
+    raw.prismal !== 1 ||
     typeof raw.title !== "string" ||
     !raw.title.trim() ||
     typeof raw.exported !== "string" ||
@@ -76,7 +76,7 @@ function parseChoices(raw) {
     !Number.isInteger(raw.round) ||
     raw.round < 1
   )
-    throw new Error("Not an optionlab choices file.");
+    throw new Error("Not a Prismal choices file.");
   const text = (value) => value === null || typeof value === "string";
   if (typeof raw.notes !== "string") throw new Error("Choices notes must be text.");
   const fields = {
@@ -176,7 +176,7 @@ function downloadChoices() {
   );
   const link = document.createElement("a");
   link.href = url;
-  link.download = `optionlab-choices-r${manifest.round}.json`;
+  link.download = `prismal-choices-r${manifest.round}.json`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast("Choices exported. Hand the JSON file back to your agent.");

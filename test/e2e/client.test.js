@@ -11,16 +11,16 @@ import { build } from "../../lib/build.js";
 
 let browser, server, origin;
 before(async () => {
-  const client = await readFile(new URL("../../client/optionlab.js", import.meta.url), "utf8");
+  const client = await readFile(new URL("../../client/prismal.js", import.meta.url), "utf8");
   server = createServer((request, response) => {
-    if (request.url.startsWith("/optionlab.js")) {
+    if (request.url.startsWith("/prismal.js")) {
       response.writeHead(200, { "Content-Type": "text/javascript" });
       response.end(client);
       return;
     }
     response.writeHead(200, { "Content-Type": "text/html" });
     response.end(
-      '<!doctype html><html><head><script src="/optionlab.js"></script><script src="/optionlab.js"></script><script>window.first={active:optionlab.active,choice:optionlab.choice("hero"),other:optionlab.choice("other"),state:optionlab.state};document.title="Live choice "+optionlab.choice("hero");</script><style>body{margin:0}header{height:80px}.hero{height:150px}</style></head><body><header>Header</header><main class="hero">A sample page</main><div id="grow"></div></body></html>',
+      '<!doctype html><html><head><script src="/prismal.js"></script><script src="/prismal.js"></script><script>window.first={active:prismal.active,choice:prismal.choice("hero"),other:prismal.choice("other"),state:prismal.state};document.title="Live choice "+prismal.choice("hero");</script><style>body{margin:0}header{height:80px}.hero{height:150px}</style></head><body><header>Header</header><main class="hero">A sample page</main><div id="grow"></div></body></html>',
     );
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
@@ -33,19 +33,19 @@ after(async () => {
 });
 test("outside a lab the client only resolves debug choices and is idempotent", async () => {
   const page = await browser.newPage();
-  await page.goto(`${origin}/?ol.hero=a&ol.state.menu=open`);
+  await page.goto(`${origin}/?prismal.hero=a&prismal.state.menu=open`);
   assert.deepEqual(await page.evaluate(() => window.first), {
     active: false,
     choice: "a",
     other: "now",
     state: { menu: "open" },
   });
-  assert.equal(await page.locator("html").getAttribute("data-ol-hero"), "a");
+  assert.equal(await page.locator("html").getAttribute("data-prismal-hero"), "a");
   await page.evaluate(() => {
-    window.previous = optionlab;
+    window.previous = prismal;
   });
-  await page.addScriptTag({ url: `${origin}/optionlab.js` });
-  assert.equal(await page.evaluate(() => optionlab === window.previous), true);
+  await page.addScriptTag({ url: `${origin}/prismal.js` });
+  assert.equal(await page.evaluate(() => prismal === window.previous), true);
   await page.close();
 });
 test("live frames resolve name before query and report focus, size and errors", async () => {
@@ -56,14 +56,14 @@ test("live frames resolve name before query and report focus, size and errors", 
     const frame = document.createElement("iframe");
     frame.width = "800";
     frame.height = "250";
-    frame.name = JSON.stringify({ ol: 1, choices: { hero: "b" }, state: { menu: "from-name" } });
+    frame.name = JSON.stringify({ prismal: 1, choices: { hero: "b" }, state: { menu: "from-name" } });
     addEventListener("message", (event) => {
-      if (event.source !== frame.contentWindow || event.data?.ol !== 1) return;
+      if (event.source !== frame.contentWindow || event.data?.prismal !== 1) return;
       window.messages.push(event.data);
       if (event.data.type === "ready")
-        frame.contentWindow.postMessage({ ol: 1, type: "init", focus: ".hero" }, "*");
+        frame.contentWindow.postMessage({ prismal: 1, type: "init", focus: ".hero" }, "*");
     });
-    frame.src = `${url}/?ol.hero=a&ol.other=c&ol.state.menu=from-query&ol.state.filter=all`;
+    frame.src = `${url}/?prismal.hero=a&prismal.other=c&prismal.state.menu=from-query&prismal.state.filter=all`;
     document.body.append(frame);
   }, origin);
   await page.waitForFunction(() => window.messages.some((m) => m.type === "rect"));
@@ -102,9 +102,9 @@ test("live frames resolve name before query and report focus, size and errors", 
   await page.close();
 });
 test("the generated file lab frames a live localhost page without a proxy", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "optionlab-live-"));
+  const directory = await mkdtemp(join(tmpdir(), "prismal-live-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
-  const manifest = join(directory, "optionlab.json");
+  const manifest = join(directory, "prismal.json");
   await writeFile(
     manifest,
     JSON.stringify({
@@ -116,7 +116,7 @@ test("the generated file lab frames a live localhost page without a proxy", asyn
           id: "hero",
           title: "Hero",
           question: "Which?",
-          views: [{ caption: "Laptop", url: "/?ol.hero=a", focus: ".hero" }],
+          views: [{ caption: "Laptop", url: "/?prismal.hero=a", focus: ".hero" }],
           options: [{ id: "b", name: "B" }],
         },
       ],
@@ -129,7 +129,7 @@ test("the generated file lab frames a live localhost page without a proxy", asyn
     addEventListener("message", (event) => {
       if (
         event.source === document.querySelector("iframe")?.contentWindow &&
-        event.data?.ol === 1 &&
+        event.data?.prismal === 1 &&
         event.data.type === "ready"
       )
         window.readyTitles.push(event.data.title);
