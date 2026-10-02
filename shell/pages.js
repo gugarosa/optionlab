@@ -3,9 +3,31 @@ let beside = false;
 let fullPage = false;
 let resetConfirm = false;
 let current = { page: "start", id: "", option: "now" };
+const inspectRoutes = items("inspect").length
+  ? items("inspect")
+  : items("elements").length
+    ? [
+        ...new Map(
+          manifest.decisions.map((d) => [
+            JSON.stringify([d.views[0].file, d.views[0].url, d.views[0].state]),
+            { ...d.views[0], label: d.title },
+          ]),
+        ).values(),
+      ]
+    : [];
+let inspectIndex = 0,
+  inspectDevice = inspectRoutes[0]?.device || "laptop",
+  inspectOn = true;
+let selectedElement = null,
+  pageInventory = [],
+  journeyDevice = "";
 const reviewPages = [
   ...(items("questions").length ? [{ href: "#/questions", label: "Questions", icon: "book" }] : []),
   ...(items("words").length ? [{ href: "#/words", label: "Words", icon: "book" }] : []),
+  ...(inspectRoutes.length || items("elements").length
+    ? [{ href: "#/inspect", label: "Inspect", icon: "inspect" }]
+    : []),
+  ...(items("journeys").length ? [{ href: "#/journeys", label: "Journeys", icon: "route" }] : []),
   { href: "#/notes", label: "Notes", icon: "note" },
 ];
 function pageLinks() {
@@ -39,7 +61,7 @@ function renderRail() {
     links += `<a href="${link.href}" class="nav-link ${selected ? "selected" : ""}" ${selected ? 'aria-current="page"' : ""}><span class="nav-marker">${link.decision ? marker(link.decision) : icon(link.icon || "note")}</span>${escapeHTML(link.label)}</a>`;
   }
   rail.innerHTML = `<div class="rail-brand"><span class="brand-mark">${icon("layers")}</span><div><strong>${escapeHTML(manifest.title)}</strong><span>Round ${manifest.round}</span></div>${button(icon("close"), "rail", 'aria-label="Hide navigation"', "rail-close")}</div>
-    <div class="rail-scroll"><div class="progress-list">${progress("Decisions picked", choices.decisions.filter((d) => d.pick !== null).length, choices.decisions.length)}${progress("Questions answered", choices.questions.filter((q) => q.answer !== null).length, choices.questions.length)}${progress("Words reviewed", choices.words.filter((w) => w.choice !== null).length, choices.words.length)}</div><nav aria-label="Review pages">${links}</nav></div>
+    <div class="rail-scroll"><div class="progress-list">${progress("Decisions picked", choices.decisions.filter((d) => d.pick !== null).length, choices.decisions.length)}${progress("Questions answered", choices.questions.filter((q) => q.answer !== null).length, choices.questions.length)}${progress("Words reviewed", choices.words.filter((w) => w.choice !== null).length, choices.words.length)}${progress("Journey steps", choices.journeys.filter((j) => j.verdict !== null).length, choices.journeys.length)}</div><nav aria-label="Review pages">${links}</nav></div>
     <footer class="rail-footer">${button(`${icon("download")} Export choices`, "export", "", "primary export-button")}<div class="footer-row">${button(`${icon("upload")} Import`, "import", "", "quiet")}<span class="autosave">${storageUnavailable ? "Export to save" : "Autosaved locally"}</span></div><div class="keyboard-hint"><kbd>P</kbd> Pick <kbd>L</kbd> Like <kbd>[</kbd> Hide rail</div>${resetConfirm ? `<div class="reset-confirm"><span>Clear this round's choices?</span>${button("Keep choices", "cancel-reset", "", "small")}${button("Reset", "confirm-reset", "", "small danger")}</div>` : button("Reset round", "reset", "", "quiet small")}</footer>`;
   rail.querySelector(".rail-scroll").scrollTop = scroll;
 }
@@ -95,8 +117,8 @@ function groupedCards(entries, card) {
     )
     .join("");
 }
-function choiceChips(values, selected, action, id) {
-  return `<div class="choice-chips">${values.map(([value, label]) => button(escapeHTML(label), action, `data-id="${escapeHTML(id)}" data-value="${escapeHTML(value)}" aria-pressed="${selected === value}"`, "choice-chip")).join("")}</div>`;
+function choiceChips(values, selected, action, id, extra = "") {
+  return `<div class="choice-chips">${values.map(([value, label]) => button(escapeHTML(label), action, `data-id="${escapeHTML(id)}" data-value="${escapeHTML(value)}" aria-pressed="${selected === value}" ${extra}`, "choice-chip")).join("")}</div>`;
 }
 function questionsPage() {
   return (
@@ -122,19 +144,156 @@ function wordsPage() {
         saved.choice !== null && saved.choice !== "keep" && !alternatives.includes(saved.choice)
           ? saved.choice
           : "";
-      return `<article class="review-card word-card"><h3>${escapeHTML(word.term)}</h3><p>${escapeHTML(word.means)}</p>${word.where?.length ? `<div class="word-where"><span>Seen in</span>${word.where.map((label) => `<span>${escapeHTML(label)}</span>`).join("")}</div>` : ""}${choiceChips([["keep", `Keep "${word.term}"`], ...alternatives.map((v) => [v, v])], saved.choice, "word", word.id)}<label class="other-word"><span>Other</span><input data-other="${word.id}" aria-label="Other word for ${escapeHTML(word.term)}" value="${escapeHTML(other)}" placeholder="Your word" /></label>${noteField(saved.note, "words", word.id)}</article>`;
+      return `<article class="review-card word-card"><h3>${escapeHTML(word.term)}</h3><p>${escapeHTML(word.means)}</p>${word.where?.length ? `<div class="word-where"><span>Seen in</span>${word.where.map((label) => button(`${escapeHTML(label)} ${icon("external")}`, "inspect-route", `data-route="${inspectRoutes.findIndex((route) => route.label === label)}"`, "quiet small")).join("")}</div>` : ""}${choiceChips([["keep", `Keep "${word.term}"`], ...alternatives.map((v) => [v, v])], saved.choice, "word", word.id)}<label class="other-word"><span>Other</span><input data-other="${word.id}" aria-label="Other word for ${escapeHTML(word.term)}" value="${escapeHTML(other)}" placeholder="Your word" /></label>${noteField(saved.note, "words", word.id)}</article>`;
     })
   );
 }
 function notesPage() {
   return `${pageHead("Notes", "Anything that crosses decisions, or deserves a little more space.")}<div class="general-notes">${noteField(choices.notes, "notes", "", "General notes", 'aria-label="General notes"')}</div>`;
 }
+function deviceButtons(device, action) {
+  return `<div class="view-tools" aria-label="Preview device">${["laptop", "phone"].map((value) => button(value === "laptop" ? "Laptop" : "Phone", action, `data-device="${value}" aria-pressed="${device === value}"`, "small")).join("")}</div>`;
+}
+function elementChoice(create = false) {
+  if (!selectedElement) return null;
+  let entry = choices.elements.find(
+    (e) =>
+      e.name === selectedElement.name &&
+      e.route === selectedElement.route &&
+      e.index === selectedElement.index,
+  );
+  if (!entry && create) {
+    entry = {
+      name: selectedElement.name,
+      route: selectedElement.route,
+      index: selectedElement.index,
+      text: selectedElement.text,
+      verdict: null,
+      note: "",
+    };
+    choices.elements.push(entry);
+  }
+  if (entry && create) entry.text = selectedElement.text;
+  return entry;
+}
+function inspectorPanel() {
+  const saved = elementChoice();
+  const count = pageInventory.find((entry) => entry.name === selectedElement?.name)?.count || 1;
+  const detail = selectedElement
+    ? `<div class="selection-head"><h2>${escapeHTML(selectedElement.name)}</h2>${button(icon("close"), "close-selection", 'aria-label="Close selection"', "quiet small")}</div><p class="selection-meta">${escapeHTML(selectedElement.group || "Page")} / <code>${escapeHTML(selectedElement.route)}</code></p>${selectedElement.what ? `<p>${escapeHTML(selectedElement.what)}</p>` : ""}<blockquote class="selected-text">${escapeHTML(selectedElement.text || "No on-screen text.")}</blockquote>${choiceChips(
+        ["clear", "unclear", "change"].map((v) => [v, v[0].toUpperCase() + v.slice(1)]),
+        saved?.verdict,
+        "element-verdict",
+        "",
+      )}${noteField(saved?.note || "", "elements", "", "Your notes")}<div class="instance-controls">${button(`${icon("left")} Previous`, "instance", `data-delta="-1" ${selectedElement.index === 0 ? "disabled" : ""}`, "small")}<span>${selectedElement.index + 1} of ${count}</span>${button(`Next ${icon("right")}`, "instance", `data-delta="1" ${selectedElement.index >= count - 1 ? "disabled" : ""}`, "small")}</div>`
+    : "<h2>Pick an element</h2><p>Point at the page to see its name. Click to leave a note.</p>";
+  const groups = [...new Set(pageInventory.map((entry) => entry.group || "Page"))];
+  return `${detail}<section class="inventory"><h2>On this page</h2>${
+    groups
+      .map(
+        (group) =>
+          `<h3>${escapeHTML(group)}</h3><ul>${pageInventory
+            .filter((entry) => (entry.group || "Page") === group)
+            .map(
+              (entry) =>
+                `<li>${button(`<span>${escapeHTML(entry.name)}</span><span class="muted">${entry.count}</span>`, "select-element", `data-name="${escapeHTML(entry.name)}"`, "quiet")}</li>`,
+            )
+            .join("")}</ul>`,
+      )
+      .join("") ||
+    '<p class="muted">No registered elements on this page. You can still point and click to inspect.</p>'
+  }</section>`;
+}
+function updateInspectorPanel() {
+  const panel = document.getElementById("inspect-panel");
+  if (panel) panel.innerHTML = inspectorPanel();
+}
+function inspectMessage(task, payload) {
+  const rec = frameRecords.get("inspect");
+  if (current.page !== "inspect" || task !== (rec?.pending || rec?.active)) return;
+  if (payload.type === "ready") {
+    selectedElement = null;
+    pageInventory = [];
+    updateInspectorPanel();
+  }
+  if (payload.type === "inventory" && Array.isArray(payload.items)) {
+    pageInventory = payload.items.filter(
+      (item) =>
+        typeof item.name === "string" &&
+        typeof item.group === "string" &&
+        Number.isInteger(item.count) &&
+        item.count > 0,
+    );
+    updateInspectorPanel();
+  }
+  if (
+    payload.type === "picked" &&
+    typeof payload.name === "string" &&
+    typeof payload.route === "string" &&
+    typeof payload.text === "string" &&
+    Number.isInteger(payload.index) &&
+    payload.index >= 0
+  ) {
+    selectedElement = payload;
+    updateInspectorPanel();
+  }
+  if (payload.type === "rect" && selectedElement && Number.isFinite(payload.top)) {
+    if (inspectDevice === "phone") rec.card.scrollIntoView({ block: "center" });
+    else {
+      const top = rec.clip.getBoundingClientRect().top + payload.top * (task.scale || 1);
+      if (top < 80 || top + Math.min(payload.height * task.scale, 300) > innerHeight) scrollBy(0, top - 100);
+    }
+  }
+}
+function inspectPage() {
+  const source = inspectRoutes[inspectIndex];
+  if (!source)
+    return `${pageHead("Inspect", "Review the details, one element at a time.")}<p>Add an inspect route or a decision view to preview a page.</p>`;
+  return `${pageHead("Inspect", "Review the details, one element at a time.")}<div class="inspect-tools"><label>Page <select id="inspect-route" aria-label="Inspect route">${inspectRoutes.map((route, index) => `<option value="${index}" ${index === inspectIndex ? "selected" : ""}>${escapeHTML(route.label)}</option>`).join("")}</select></label>${deviceButtons(inspectDevice, "inspect-device")}${button(`${icon("inspect")} ${inspectOn ? "Inspect on" : "Inspect off"}`, "inspect-toggle", `aria-pressed="${inspectOn}"`, "small")}</div><div class="inspect-layout">${frameSlot("inspect", { ...source, caption: inspectDevice === "phone" ? "Phone" : "Laptop", device: inspectDevice }, "now", "", { full: true, label: "Your picks", inspect: inspectOn, onMessage: inspectMessage })}<aside class="review-card inspector-panel" id="inspect-panel" aria-label="Element review">${inspectorPanel()}</aside></div>`;
+}
+function journeysPage() {
+  const journey = items("journeys").find((entry) => entry.id === current.id) || items("journeys")[0];
+  const device = journeyDevice || journey.steps[0].device || "laptop";
+  return `${pageHead("Journeys", "Follow the path. Flag the moments that need to be clearer.", deviceButtons(device, "journey-device"))}<div class="journey-tabs" role="tablist" aria-label="Journeys">${items(
+    "journeys",
+  )
+    .map(
+      (entry) =>
+        `<a href="#/journeys/${entry.id}" role="tab" aria-selected="${entry.id === journey.id}" class="button ${entry.id === journey.id ? "active" : ""}">${escapeHTML(entry.title)}</a>`,
+    )
+    .join("")}</div><div class="journey-steps">${journey.steps
+    .map((step, index) => {
+      const saved = choices.journeys.find(
+        (entry) => entry.journey === journey.id && entry.step === index + 1,
+      );
+      const view = {
+        ...step,
+        device: journeyDevice || step.device || "laptop",
+        caption: `Step ${index + 1}`,
+        focus: step.selector,
+      };
+      return `<section class="journey-step"><div class="step-head"><span class="letter">${index + 1}</span><div><h2>${escapeHTML(step.title)}</h2>${step.does ? `<p>${escapeHTML(step.does)}</p>` : ""}</div></div>${frameSlot(`journey:${journey.id}:${index}`, view, "now", "", { highlight: { selector: step.selector, label: `Step ${index + 1}` }, label: "Your picks" })}${step.ask ? `<p class="step-ask">${escapeHTML(step.ask)}</p>` : ""}${choiceChips(
+        ["obvious", "unclear", "missing"].map((v) => [v, v[0].toUpperCase() + v.slice(1)]),
+        saved.verdict,
+        "journey-verdict",
+        journey.id,
+        `data-step="${index + 1}"`,
+      )}${noteField(saved.note, "journeys", journey.id, "Your notes", `data-step="${index + 1}"`)}</section>`;
+    })
+    .join("")}</div>`;
+}
 function render() {
   framePlans = [];
   const next = document.createElement("template");
   next.innerHTML = (
-    { d: decisionPage, questions: questionsPage, words: wordsPage, notes: notesPage }[current.page] ||
-    startPage
+    {
+      d: decisionPage,
+      questions: questionsPage,
+      words: wordsPage,
+      notes: notesPage,
+      inspect: inspectPage,
+      journeys: journeysPage,
+    }[current.page] || startPage
   )();
   patchChildren(stage, next.content);
   syncFrames();

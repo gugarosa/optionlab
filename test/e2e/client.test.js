@@ -20,7 +20,7 @@ before(async () => {
     }
     response.writeHead(200, { "Content-Type": "text/html" });
     response.end(
-      '<!doctype html><html><head><script src="/optionlab.js"></script><script src="/optionlab.js"></script><script>window.first={active:optionlab.active,choice:optionlab.choice("hero"),other:optionlab.choice("other"),state:optionlab.state};</script><style>body{margin:0}header{height:80px}.hero{height:150px}</style></head><body><header>Header</header><main class="hero">A sample page</main><div id="grow"></div></body></html>',
+      '<!doctype html><html><head><script src="/optionlab.js"></script><script src="/optionlab.js"></script><script>window.first={active:optionlab.active,choice:optionlab.choice("hero"),other:optionlab.choice("other"),state:optionlab.state};document.title="Live choice "+optionlab.choice("hero");</script><style>body{margin:0}header{height:80px}.hero{height:150px}</style></head><body><header>Header</header><main class="hero">A sample page</main><div id="grow"></div></body></html>',
     );
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
@@ -124,8 +124,19 @@ test("the generated file lab frames a live localhost page without a proxy", asyn
   );
   const result = await build(manifest);
   const page = await browser.newPage();
+  await page.addInitScript(() => {
+    window.readyTitles = [];
+    addEventListener("message", (event) => {
+      if (
+        event.source === document.querySelector("iframe")?.contentWindow &&
+        event.data?.ol === 1 &&
+        event.data.type === "ready"
+      )
+        window.readyTitles.push(event.data.title);
+    });
+  });
   await page.goto(`${pathToFileURL(result.output).href}#/d/hero/b`);
-  await page.waitForFunction(() => document.querySelector(".frame-status")?.hidden);
-  assert.equal(await page.frames()[1].evaluate(() => optionlab.choice("hero")), "b");
+  await page.waitForFunction(() => window.readyTitles.includes("Live choice b"));
+  assert.equal(await page.locator(".frame-card").getAttribute("aria-busy"), "false");
   await page.close();
 });

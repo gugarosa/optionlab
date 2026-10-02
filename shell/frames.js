@@ -85,6 +85,7 @@ function layoutFrame(task) {
   const bezel = phone && !focused;
   const available = Math.max(1, task.rec.body.clientWidth - 32 - (bezel ? 16 : 0));
   const scale = Math.min(1, available / Math.max(1, cropWidth));
+  task.scale = scale;
   task.frame.style.width = `${width}px`;
   task.frame.style.height = `${height}px`;
   task.frame.style.transform = `translate(${-left * scale}px, ${-top * scale}px) scale(${scale})`;
@@ -98,6 +99,14 @@ function sendFrame(task, type, payload = {}) {
     { ol: 1, type, ...payload },
     task.origin === "null" ? "*" : task.origin,
   );
+}
+function initFrame(task) {
+  sendFrame(task, "init", {
+    elements: items("elements"),
+    inspect: Boolean(task.plan.inspect),
+    highlight: task.plan.highlight || null,
+    focus: task.plan.full ? "" : task.plan.view.focus || "",
+  });
 }
 function startFrame(task) {
   if (task.disposed || task.rec.pending !== task) return;
@@ -193,15 +202,19 @@ function syncFrames() {
       option: plan.option,
       choices: plan.choices,
       full: plan.full,
-      inspect: plan.inspect,
-      highlight: plan.highlight,
     });
     if (signature !== rec.signature) {
       rec.signature = signature;
       requestFrame(rec, plan);
     } else {
+      const task = rec.pending || rec.active;
+      const controlsChanged =
+        task &&
+        (task.plan.inspect !== plan.inspect ||
+          JSON.stringify(task.plan.highlight) !== JSON.stringify(plan.highlight));
       if (rec.active) rec.active.plan = plan;
       if (rec.pending) rec.pending.plan = plan;
+      if (controlsChanged && task.ready) initFrame(task);
       layoutFrame(rec.active || rec.pending);
     }
   }
@@ -217,12 +230,9 @@ addEventListener("message", (event) => {
     task.ready = true;
     if ((task.rec.pending || task.rec.active) === task) task.rec.card.setAttribute("aria-busy", "false");
     finishLoading(task);
-    sendFrame(task, "init", {
-      elements: items("elements"),
-      inspect: Boolean(task.plan.inspect),
-      highlight: task.plan.highlight || null,
-      focus: task.plan.full ? "" : task.plan.view.focus || "",
-    });
+    initFrame(task);
+    if (typeof payload.route === "string")
+      task.rec.card.querySelector(".frame-caption code").textContent = payload.route;
     activateFrame(task);
     if (task.rec.pending === task) task.rec.pending = null;
   } else if (payload.type === "size" && Number.isFinite(payload.height) && payload.height > 0) {

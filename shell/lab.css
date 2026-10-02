@@ -793,6 +793,120 @@ select {
   line-height: 24px;
   padding: 20px;
 }
+.inspect-tools,
+.instance-controls,
+.selection-head,
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.inspect-tools {
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.inspect-tools > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.inspect-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+.inspector-panel {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+.selection-head {
+  justify-content: space-between;
+  align-items: start;
+}
+.selection-meta {
+  font-size: 12px;
+  color: var(--gray-500);
+  overflow-wrap: anywhere;
+}
+.selected-text {
+  margin: 16px 0 0;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.instance-controls {
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.instance-controls > span {
+  color: var(--gray-500);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.inventory {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--gray-200);
+}
+.inventory h3 {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin: 16px 0 4px;
+}
+.inventory ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.inventory li .button {
+  width: 100%;
+  justify-content: space-between;
+  text-align: left;
+  white-space: normal;
+  font-weight: 400;
+}
+.journey-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.journey-tabs a {
+  text-decoration: none;
+}
+.journey-tabs .active {
+  color: var(--brand-700);
+  border-color: var(--brand-300);
+  background: var(--brand-50);
+}
+.journey-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  align-items: start;
+}
+.step-head {
+  align-items: start;
+  margin-bottom: 16px;
+}
+.step-head p {
+  margin-top: 4px;
+  color: var(--gray-600);
+  font-size: 13px;
+}
+.step-ask {
+  margin-top: 20px;
+}
+.journey-step .note-field {
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
+}
 .skip-link {
   position: fixed;
   top: -80px;
@@ -842,6 +956,14 @@ select {
   }
 }
 @media (max-width: 899px) {
+  .inspect-layout,
+  .journey-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .inspector-panel {
+    position: static;
+    max-height: none;
+  }
   .mobile-bar {
     display: flex;
     position: sticky;

@@ -9,7 +9,10 @@ function navigate() {
       ? { page, id, option: decision.options.some((entry) => entry.id === option) ? option : "now" }
       : {
           page: reviewPages.some((entry) => entry.href === `#/${page}`) ? page : "start",
-          id: "",
+          id:
+            page === "journeys"
+              ? (items("journeys").find((journey) => journey.id === id) || items("journeys")[0])?.id || ""
+              : "",
           option: "now",
         };
   render();
@@ -45,6 +48,45 @@ function act(action, target) {
   } else if (action === "retry") {
     const rec = frameRecords.get(target.dataset.key);
     if (rec) requestFrame(rec, (rec.pending || rec.active).plan);
+  } else if (action === "inspect-route") {
+    inspectIndex = Number(target.dataset.route);
+    selectedElement = null;
+    pageInventory = [];
+    if (current.page === "inspect") render();
+    else location.hash = "#/inspect";
+  } else if (action === "inspect-device" || action === "journey-device") {
+    if (action === "inspect-device") {
+      inspectDevice = target.dataset.device;
+      selectedElement = null;
+      pageInventory = [];
+    } else journeyDevice = target.dataset.device;
+    render();
+  } else if (action === "inspect-toggle") {
+    inspectOn = !inspectOn;
+    render();
+  } else if (action === "close-selection") {
+    selectedElement = null;
+    const task = frameRecords.get("inspect")?.active;
+    if (task) sendFrame(task, "select", { name: "", index: 0 });
+    updateInspectorPanel();
+  } else if (action === "instance" || action === "select-element") {
+    const task = frameRecords.get("inspect")?.active;
+    if (task)
+      sendFrame(task, "select", {
+        name: action === "instance" ? selectedElement.name : target.dataset.name,
+        index: action === "instance" ? selectedElement.index + Number(target.dataset.delta) : 0,
+      });
+  } else if (action === "element-verdict" || action === "journey-verdict") {
+    const entry =
+      action === "element-verdict"
+        ? elementChoice(true)
+        : choices.journeys.find(
+            (j) => j.journey === target.dataset.id && j.step === Number(target.dataset.step),
+          );
+    entry.verdict = entry.verdict === target.dataset.value ? null : target.dataset.value;
+    save();
+    if (action === "element-verdict") updateInspectorPanel();
+    else render();
   } else if (action === "answer" || action === "word") {
     const group = action === "answer" ? choices.questions : choices.words;
     const entry = group.find((item) => item.id === target.dataset.id);
@@ -91,11 +133,26 @@ document.addEventListener("input", (event) => {
     growNote(target);
     return;
   }
-  const saved = choices[target.dataset.note]?.find((entry) => entry.id === target.dataset.id);
+  const saved =
+    target.dataset.note === "elements"
+      ? elementChoice(true)
+      : target.dataset.note === "journeys"
+        ? choices.journeys.find(
+            (entry) => entry.journey === target.dataset.id && entry.step === Number(target.dataset.step),
+          )
+        : choices[target.dataset.note]?.find((entry) => entry.id === target.dataset.id);
   if (saved) {
     saved.note = target.value;
     save();
     growNote(target);
+  }
+});
+document.addEventListener("change", (event) => {
+  if (event.target instanceof HTMLSelectElement && event.target.id === "inspect-route") {
+    inspectIndex = Number(event.target.value);
+    selectedElement = null;
+    pageInventory = [];
+    render();
   }
 });
 document.getElementById("import-file").addEventListener("change", async (event) => {
@@ -147,7 +204,12 @@ document.addEventListener("keydown", (event) => {
   } else if (["p", "l", "b", "f", "["].includes(key)) {
     event.preventDefault();
     act({ p: "pick", l: "like", b: "beside", f: "focus", "[": "rail" }[key], null);
+  } else if (key === "i" && reviewPages.some((entry) => entry.href === "#/inspect")) {
+    event.preventDefault();
+    if (current.page === "inspect") act("inspect-toggle", null);
+    else location.hash = "#/inspect";
   } else if (key === "escape") {
+    if (current.page === "inspect" && selectedElement) act("close-selection", null);
     document.body.classList.remove("menu-open");
     resetConfirm = false;
     renderRail();
