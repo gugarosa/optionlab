@@ -76,10 +76,54 @@ function decisionPage() {
 }
 function render() {
   framePlans = [];
-  stage.innerHTML = current.page === "d" ? decisionPage() : startPage();
+  const next = document.createElement("template");
+  next.innerHTML = current.page === "d" ? decisionPage() : startPage();
+  patchChildren(stage, next.content);
   syncFrames();
   renderRail();
   for (const textarea of stage.querySelectorAll("textarea")) growNote(textarea);
+}
+function patchChildren(parent, next) {
+  let cursor = parent.firstChild;
+  for (const fresh of next.childNodes) {
+    const kept = fresh instanceof HTMLElement && frameRecords.get(fresh.dataset.frameKey)?.card;
+    if (kept?.parentNode === parent) {
+      // Detaching even an unchanged iframe reloads its browsing context.
+      while (cursor && cursor !== kept) {
+        const remove = cursor;
+        cursor = cursor.nextSibling;
+        remove.remove();
+      }
+      cursor = kept.nextSibling;
+      continue;
+    }
+    if (
+      cursor?.nodeType === fresh.nodeType &&
+      (!(fresh instanceof Element) ||
+        (cursor instanceof Element && cursor.tagName === fresh.tagName && !cursor.hasAttribute("data-key")))
+    ) {
+      if (cursor instanceof Element && fresh instanceof Element) {
+        for (const attr of [...cursor.attributes])
+          if (!fresh.hasAttribute(attr.name)) cursor.removeAttribute(attr.name);
+        for (const attr of fresh.attributes)
+          if (cursor.getAttribute(attr.name) !== attr.value) cursor.setAttribute(attr.name, attr.value);
+        patchChildren(cursor, fresh);
+        if (
+          (cursor instanceof HTMLInputElement ||
+            cursor instanceof HTMLTextAreaElement ||
+            cursor instanceof HTMLSelectElement) &&
+          cursor.value !== fresh.value
+        )
+          cursor.value = fresh.value;
+      } else if (cursor.nodeValue !== fresh.nodeValue) cursor.nodeValue = fresh.nodeValue;
+      cursor = cursor.nextSibling;
+    } else parent.insertBefore(fresh.cloneNode(true), cursor);
+  }
+  while (cursor) {
+    const remove = cursor;
+    cursor = cursor.nextSibling;
+    remove.remove();
+  }
 }
 function growNote(textarea) {
   textarea.style.height = "auto";

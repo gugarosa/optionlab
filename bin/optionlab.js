@@ -9,6 +9,7 @@ import { build } from "../lib/build.js";
 const help = `optionlab - live design options, one choices file
 
   optionlab build [manifest] [-o file] [--watch] [--open]
+  optionlab check [manifest] [--shots dir]
   optionlab --help
   optionlab --version`;
 async function main() {
@@ -20,6 +21,7 @@ async function main() {
       output: { type: "string", short: "o" },
       watch: { type: "boolean" },
       open: { type: "boolean" },
+      shots: { type: "string" },
     },
   });
   if (values.version) {
@@ -31,8 +33,20 @@ async function main() {
     return;
   }
   const [command, manifestPath] = positionals;
-  if (command !== "build") throw new Error(`Unknown command "${command}". Run optionlab --help.`);
+  if (!["build", "check"].includes(command))
+    throw new Error(`Unknown command "${command}". Run optionlab --help.`);
   if (positionals.length > 2) throw new Error("Too many arguments.");
+  const allowed = command === "build" ? ["output", "watch", "open"] : ["shots"];
+  for (const flag of Object.keys(values)) {
+    if (!["help", "version", ...allowed].includes(flag))
+      throw new Error(`--${flag} is not available for ${command}.`);
+  }
+  if (command === "check") {
+    const { check } = await import("../lib/check.js");
+    const result = await check(manifestPath, { shots: values.shots });
+    process.exitCode = result.failures ? 1 : 0;
+    return;
+  }
   async function rebuild() {
     const result = await build(manifestPath, { output: values.output });
     const { decisions, options, frames, bytes } = result.stats;
@@ -63,7 +77,9 @@ async function main() {
     let timer;
     let working = false;
     let again = false;
+    let stopped = false;
     const attach = (dependencies) => {
+      if (stopped) return;
       for (const watcher of watchers) watcher.close();
       const files = new Set(dependencies);
       watchers = [...new Set(dependencies.map(dirname))].map((dir) => {
@@ -88,7 +104,7 @@ async function main() {
         console.error(`optionlab: ${error.message}`);
       } finally {
         working = false;
-        if (again) {
+        if (again && !stopped) {
           again = false;
           await update();
         }
@@ -96,6 +112,7 @@ async function main() {
     };
     attach(result.dependencies);
     const close = () => {
+      stopped = true;
       clearTimeout(timer);
       for (const watcher of watchers) watcher.close();
     };

@@ -1,6 +1,7 @@
 // @ts-check
 function navigate() {
   const previous = current.page + current.id;
+  const focusTab = document.activeElement?.getAttribute("role") === "tab";
   const [, page = "start", id = "", option = ""] = location.hash.split("/");
   const decision = manifest.decisions.find((entry) => entry.id === id);
   current =
@@ -8,6 +9,8 @@ function navigate() {
       ? { page, id, option: decision.options.some((entry) => entry.id === option) ? option : "now" }
       : { page: "start", id: "", option: "now" };
   render();
+  if (focusTab && current.page === "d")
+    stage.querySelector('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true });
   if (previous !== current.page + current.id) window.scrollTo(0, 0);
   document.body.classList.remove("menu-open");
   updateMenuState();

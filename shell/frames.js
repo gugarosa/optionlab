@@ -22,7 +22,7 @@ const frameResize = new ResizeObserver((entries) => {
 function frameSlot(key, view, option = "now", decision = "", extra = {}) {
   const slot = `frame-slot-${framePlans.length}`;
   framePlans.push({ key, slot, view, option, choices: frameChoices(decision, option), ...extra });
-  return `<div id="${slot}" class="frame-slot"></div>`;
+  return `<div id="${slot}" class="frame-slot" data-frame-key="${escapeHTML(key)}"></div>`;
 }
 function frameRoute(view) {
   if (view.file) return view.file.includes("#") ? view.file.slice(view.file.indexOf("#")) : view.file;
@@ -182,7 +182,7 @@ function syncFrames() {
       frameObserver.observe(card);
       frameResize.observe(card);
     }
-    document.getElementById(plan.slot).replaceWith(rec.card);
+    document.getElementById(plan.slot)?.replaceWith(rec.card);
     const label = plan.label || (plan.option === "now" ? "Current" : plan.option.toUpperCase());
     rec.card.querySelector(".frame-caption").innerHTML =
       `<span>${escapeHTML(plan.view.caption || plan.view.label || "Page")} <span class="muted">/ ${escapeHTML(label)}</span></span><code>${escapeHTML(frameRoute(plan.view))}</code>`;
