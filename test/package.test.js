@@ -14,6 +14,16 @@ test("package has no runtime dependencies and supports Node 20", async () => {
   assert.equal(pkg.engines.node, ">=20");
   assert.equal(pkg.peerDependenciesMeta.playwright.optional, true);
 });
+test("dependency locks use public, integrity-checked package sources", async () => {
+  const lock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
+  for (const [path, entry] of Object.entries(lock.packages)) {
+    if (!path) continue;
+    const source = new URL(entry.resolved);
+    assert.equal(source.origin, "https://registry.npmjs.org", path);
+    assert.equal(source.username + source.password + source.search + source.hash, "", path);
+    assert.match(entry.integrity, /^sha(?:1|256|384|512)-[a-zA-Z0-9+/]+={0,2}$/, path);
+  }
+});
 test("a packed install builds without dependencies and resolves optional checkers from the host project", async (t) => {
   const exec = promisify(execFile);
   const root = await mkdtemp(join(tmpdir(), "optionlab-installed-"));

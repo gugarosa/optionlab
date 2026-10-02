@@ -1,7 +1,7 @@
 // @ts-check
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { build } from "../lib/build.js";

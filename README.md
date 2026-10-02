@@ -8,28 +8,44 @@ Your coding agent builds alternatives for a header, a plan table, a first impres
 You open one HTML file, try the real pages, compare beside the current design, like,
 pick and leave notes. Export one JSON file. The agent makes your picks canonical.
 
-No reviewer installation. No studio to rebuild your app inside. No screenshots pretending to be interactive.
+<details>
+<summary>Why a live lab?</summary>
 
-## Try a round in three commands
+**Why not Storybook?** It presents isolated components. Optionlab frames your real pages and records a choice.
 
-This is an **unpublished preview**. Use the implementation branch until the first PR is merged:
+**Why not screenshots?** Frames are interactive and responsive. Screenshots verify options, not replace them.
+
+**Does it work with my framework?** Yes. A variant is a CSS attribute or one function call.
+
+**Do I ship the client?** No. It is development-only and removed when the rounds end.
+
+</details>
+
+## Installation
+
+This is an **unpublished preview**. Node 20+ is enough to build; the reviewer installs nothing.
 
 ```sh
-git clone --branch build-optionlab https://github.com/gugarosa/optionlab.git
+git clone https://github.com/gugarosa/optionlab.git
 cd optionlab
+```
+
+## Quick start
+
+```sh
 node bin/optionlab.js build examples/lumen/optionlab.json --open
 ```
 
-Node 20+ is enough to build. Lumen is a fictional note-taking product with three decisions,
+Lumen is a fictional note-taking product with three decisions,
 13 options, questions, vocabulary, an inspector and a four-step journey. Everything works offline.
 After building, `lab.html` can move anywhere and open by double-clicking.
 
-## Bring it to your app
+### Use in your app
 
 Install this preview explicitly, then give your agent the [skill](skill/SKILL.md):
 
 ```sh
-npm install --save-dev github:gugarosa/optionlab#build-optionlab
+npm install --save-dev github:gugarosa/optionlab
 npx optionlab init
 npx optionlab skill
 ```
@@ -161,20 +177,21 @@ and `loadManifest(path?)`. Build returns output, normalized manifest, bundled da
 dependencies and counts. Check returns failures, warnings, frame count and problems.
 Load returns `{ manifest, path }`. There are **zero runtime dependencies**.
 
-## FAQ
+## Documentation
 
-**Why not Storybook?** Storybook presents isolated components. Optionlab frames your real pages and records a choice.
+- [Conventions](CONVENTIONS.md)
+- [Architecture](docs/architecture.md)
+- [Agent workflow](skill/SKILL.md)
 
-**Why not screenshots?** Frames are live, interactive and responsive. Screenshots are verification, not the review.
+## Tests
 
-**Does it work with my framework?** Yes. A variant is a CSS attribute or one function call.
+```sh
+npm ci
+npm run verify
+npx playwright install chromium
+npm run verify:browser
+```
 
-**Do I ship the client?** No. It is development-only and removed when the rounds end.
-
-## Development
-
-Run `npm ci`, `npm test`, `npx playwright install chromium`, `npm run test:e2e`,
-`npm run check:example` and `npm pack --dry-run`. See [AGENTS.md](AGENTS.md).
-`UPDATE_SHOTS=1 npm run test:e2e` refreshes the fictional screenshots in `media/`.
+See [AGENTS.md](AGENTS.md) for focused tests, browser selection and screenshot refreshes.
 
 MIT. Lucide icons use ISC; Feather-derived paths retain their MIT notice in `shell/icons.js`.
