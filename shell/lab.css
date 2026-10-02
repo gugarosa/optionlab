@@ -700,6 +700,94 @@ textarea {
   border-color: var(--error-500);
   color: var(--error-700);
 }
+.review-group {
+  margin-top: 32px;
+}
+.review-group > h2 {
+  margin-bottom: 16px;
+}
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: 20px;
+}
+.review-card {
+  padding: 24px;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: white;
+}
+.review-card h3 {
+  margin: 0;
+  color: var(--gray-900);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.review-card > p {
+  margin-top: 8px;
+  color: var(--gray-600);
+  max-width: 70ch;
+}
+.choice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+}
+.choice-chip {
+  white-space: normal;
+  text-align: left;
+  font-size: 13px;
+  box-shadow: none;
+}
+.review-card .note-field {
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
+}
+.review-card .note-field > span {
+  padding: 0;
+}
+.word-where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--gray-500);
+  font-size: 12px;
+}
+.other-word {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: var(--gray-600);
+}
+.other-word input,
+select {
+  min-height: 36px;
+  min-width: 0;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  background: white;
+  padding: 7px 10px;
+}
+.other-word input {
+  flex: 1;
+}
+.general-notes .note-field {
+  flex-direction: column;
+  gap: 8px;
+}
+.general-notes textarea {
+  min-height: 360px;
+  font-size: 14px;
+  line-height: 24px;
+  padding: 20px;
+}
 .skip-link {
   position: fixed;
   top: -80px;

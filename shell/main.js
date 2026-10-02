@@ -7,7 +7,11 @@ function navigate() {
   current =
     page === "d" && decision
       ? { page, id, option: decision.options.some((entry) => entry.id === option) ? option : "now" }
-      : { page: "start", id: "", option: "now" };
+      : {
+          page: reviewPages.some((entry) => entry.href === `#/${page}`) ? page : "start",
+          id: "",
+          option: "now",
+        };
   render();
   if (focusTab && current.page === "d")
     stage.querySelector('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true });
@@ -41,6 +45,13 @@ function act(action, target) {
   } else if (action === "retry") {
     const rec = frameRecords.get(target.dataset.key);
     if (rec) requestFrame(rec, (rec.pending || rec.active).plan);
+  } else if (action === "answer" || action === "word") {
+    const group = action === "answer" ? choices.questions : choices.words;
+    const entry = group.find((item) => item.id === target.dataset.id);
+    const field = action === "answer" ? "answer" : "choice";
+    entry[field] = entry[field] === target.dataset.value ? null : target.dataset.value;
+    save();
+    render();
   } else if (action === "option") location.hash = `#/d/${current.id}/${target.dataset.option}`;
   else if (saved && ["pick", "like", "focus", "beside"].includes(action)) {
     if (action === "pick") {
@@ -66,7 +77,20 @@ document.addEventListener("click", (event) => {
 });
 document.addEventListener("input", (event) => {
   const target = event.target;
+  if (target instanceof HTMLInputElement && target.dataset.other) {
+    choices.words.find((word) => word.id === target.dataset.other).choice = target.value || null;
+    for (const chip of target.closest(".word-card").querySelectorAll(".choice-chip"))
+      chip.setAttribute("aria-pressed", "false");
+    save();
+    return;
+  }
   if (!(target instanceof HTMLTextAreaElement) || !target.dataset.note) return;
+  if (target.dataset.note === "notes") {
+    choices.notes = target.value;
+    save();
+    growNote(target);
+    return;
+  }
   const saved = choices[target.dataset.note]?.find((entry) => entry.id === target.dataset.id);
   if (saved) {
     saved.note = target.value;

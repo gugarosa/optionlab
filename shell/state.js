@@ -70,6 +70,9 @@ function parseChoices(raw) {
     !object(raw) ||
     raw.optionlab !== 1 ||
     typeof raw.title !== "string" ||
+    !raw.title.trim() ||
+    typeof raw.exported !== "string" ||
+    Number.isNaN(Date.parse(raw.exported)) ||
     !Number.isInteger(raw.round) ||
     raw.round < 1
   )
@@ -85,7 +88,9 @@ function parseChoices(raw) {
   for (const d of list("decisions")) {
     if (
       typeof d.id !== "string" ||
+      typeof d.title !== "string" ||
       !text(d.pick) ||
+      !text(d.pickName) ||
       !note(d) ||
       !Array.isArray(d.liked) ||
       d.liked.some((v) => typeof v !== "string")
@@ -95,7 +100,8 @@ function parseChoices(raw) {
   for (const q of list("questions"))
     if (typeof q.id !== "string" || !text(q.answer) || !note(q)) throw new Error("Invalid question choices.");
   for (const w of list("words"))
-    if (typeof w.id !== "string" || !text(w.choice) || !note(w)) throw new Error("Invalid word choices.");
+    if (typeof w.id !== "string" || typeof w.term !== "string" || !text(w.choice) || !note(w))
+      throw new Error("Invalid word choices.");
   for (const e of list("elements")) {
     if (
       typeof e.name !== "string" ||
@@ -110,6 +116,7 @@ function parseChoices(raw) {
   for (const j of list("journeys")) {
     if (
       typeof j.journey !== "string" ||
+      typeof j.title !== "string" ||
       !Number.isInteger(j.step) ||
       j.step < 1 ||
       !note(j) ||

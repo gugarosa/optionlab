@@ -3,7 +3,11 @@ let beside = false;
 let fullPage = false;
 let resetConfirm = false;
 let current = { page: "start", id: "", option: "now" };
-const reviewPages = [];
+const reviewPages = [
+  ...(items("questions").length ? [{ href: "#/questions", label: "Questions", icon: "book" }] : []),
+  ...(items("words").length ? [{ href: "#/words", label: "Words", icon: "book" }] : []),
+  { href: "#/notes", label: "Notes", icon: "note" },
+];
 function pageLinks() {
   return [
     { href: "#/start", label: "Start", icon: "layers" },
@@ -25,14 +29,17 @@ function renderRail() {
   const scroll = rail.querySelector(".rail-scroll")?.scrollTop || 0;
   let links = "";
   for (const link of pageLinks()) {
-    if (link.decision === manifest.decisions[0]?.id) links += '<h2 class="nav-label">Decisions</h2>';
+    if (link.decision && link.decision === manifest.decisions[0]?.id)
+      links += '<h2 class="nav-label">Decisions</h2>';
+    if (link.href === reviewPages.find((entry) => entry.href !== "#/notes")?.href)
+      links += '<h2 class="nav-label">Review</h2>';
     const selected = link.decision
       ? current.page === "d" && current.id === link.decision
       : current.page === link.href.split("/")[1];
     links += `<a href="${link.href}" class="nav-link ${selected ? "selected" : ""}" ${selected ? 'aria-current="page"' : ""}><span class="nav-marker">${link.decision ? marker(link.decision) : icon(link.icon || "note")}</span>${escapeHTML(link.label)}</a>`;
   }
   rail.innerHTML = `<div class="rail-brand"><span class="brand-mark">${icon("layers")}</span><div><strong>${escapeHTML(manifest.title)}</strong><span>Round ${manifest.round}</span></div>${button(icon("close"), "rail", 'aria-label="Hide navigation"', "rail-close")}</div>
-    <div class="rail-scroll"><div class="progress-list">${progress("Decisions picked", choices.decisions.filter((d) => d.pick !== null).length, choices.decisions.length)}</div><nav aria-label="Review pages">${links}</nav></div>
+    <div class="rail-scroll"><div class="progress-list">${progress("Decisions picked", choices.decisions.filter((d) => d.pick !== null).length, choices.decisions.length)}${progress("Questions answered", choices.questions.filter((q) => q.answer !== null).length, choices.questions.length)}${progress("Words reviewed", choices.words.filter((w) => w.choice !== null).length, choices.words.length)}</div><nav aria-label="Review pages">${links}</nav></div>
     <footer class="rail-footer">${button(`${icon("download")} Export choices`, "export", "", "primary export-button")}<div class="footer-row">${button(`${icon("upload")} Import`, "import", "", "quiet")}<span class="autosave">${storageUnavailable ? "Export to save" : "Autosaved locally"}</span></div><div class="keyboard-hint"><kbd>P</kbd> Pick <kbd>L</kbd> Like <kbd>[</kbd> Hide rail</div>${resetConfirm ? `<div class="reset-confirm"><span>Clear this round's choices?</span>${button("Keep choices", "cancel-reset", "", "small")}${button("Reset", "confirm-reset", "", "small danger")}</div>` : button("Reset round", "reset", "", "quiet small")}</footer>`;
   rail.querySelector(".rail-scroll").scrollTop = scroll;
 }
@@ -74,10 +81,61 @@ function decisionPage() {
     <section id="decision-panel" role="tabpanel" aria-labelledby="tab-${option.id}"><div class="option-context"><div><p class="option-idea">${escapeHTML(option.idea || (option.id === "now" ? "The current design, without a variant applied." : ""))}</p><div class="option-reasons">${option.why ? `<span>${icon("book")}${escapeHTML(option.why)}</span>` : ""}${option.tradeoff ? `<span>${icon("alert")}${escapeHTML(option.tradeoff)}</span>` : ""}</div></div><div class="view-tools">${d.views.some((view) => view.focus) ? button(`${icon("focus")} ${fullPage ? "Full page" : "Focus"}`, "focus", `aria-pressed="${!fullPage}"`, "small") : ""}${button(`${icon("columns")} Beside Now`, "beside", `aria-pressed="${beside}"`, "small")}</div></div>
     ${noteField(saved.note, "decisions", d.id)}<div class="views ${beside ? "comparing" : ""} ${d.views.length === 1 ? "single" : ""}">${views}</div></section>`;
 }
+function groupedCards(entries, card) {
+  const groups = new Map();
+  for (const entry of entries) {
+    const group = entry.group || "";
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push(entry);
+  }
+  return [...groups]
+    .map(
+      ([group, values]) =>
+        `<section class="review-group">${group ? `<h2>${escapeHTML(group)}</h2>` : ""}<div class="review-grid">${values.map(card).join("")}</div></section>`,
+    )
+    .join("");
+}
+function choiceChips(values, selected, action, id) {
+  return `<div class="choice-chips">${values.map(([value, label]) => button(escapeHTML(label), action, `data-id="${escapeHTML(id)}" data-value="${escapeHTML(value)}" aria-pressed="${selected === value}"`, "choice-chip")).join("")}</div>`;
+}
+function questionsPage() {
+  return (
+    pageHead("Questions", "A few details to settle before the next round.") +
+    groupedCards(items("questions"), (q) => {
+      const saved = choices.questions.find((entry) => entry.id === q.id);
+      return `<article class="review-card"><h3>${escapeHTML(q.question)}</h3>${q.why ? `<p>${escapeHTML(q.why)}</p>` : ""}${choiceChips(
+        q.choices.map((v) => [v, v]),
+        saved.answer,
+        "answer",
+        q.id,
+      )}${noteField(saved.note, "questions", q.id)}</article>`;
+    })
+  );
+}
+function wordsPage() {
+  return (
+    pageHead("Words", "Keep the language that makes sense. Change what gets in the way.") +
+    groupedCards(items("words"), (word) => {
+      const saved = choices.words.find((entry) => entry.id === word.id);
+      const alternatives = word.alternatives || [];
+      const other =
+        saved.choice !== null && saved.choice !== "keep" && !alternatives.includes(saved.choice)
+          ? saved.choice
+          : "";
+      return `<article class="review-card word-card"><h3>${escapeHTML(word.term)}</h3><p>${escapeHTML(word.means)}</p>${word.where?.length ? `<div class="word-where"><span>Seen in</span>${word.where.map((label) => `<span>${escapeHTML(label)}</span>`).join("")}</div>` : ""}${choiceChips([["keep", `Keep "${word.term}"`], ...alternatives.map((v) => [v, v])], saved.choice, "word", word.id)}<label class="other-word"><span>Other</span><input data-other="${word.id}" aria-label="Other word for ${escapeHTML(word.term)}" value="${escapeHTML(other)}" placeholder="Your word" /></label>${noteField(saved.note, "words", word.id)}</article>`;
+    })
+  );
+}
+function notesPage() {
+  return `${pageHead("Notes", "Anything that crosses decisions, or deserves a little more space.")}<div class="general-notes">${noteField(choices.notes, "notes", "", "General notes", 'aria-label="General notes"')}</div>`;
+}
 function render() {
   framePlans = [];
   const next = document.createElement("template");
-  next.innerHTML = current.page === "d" ? decisionPage() : startPage();
+  next.innerHTML = (
+    { d: decisionPage, questions: questionsPage, words: wordsPage, notes: notesPage }[current.page] ||
+    startPage
+  )();
   patchChildren(stage, next.content);
   syncFrames();
   renderRail();
