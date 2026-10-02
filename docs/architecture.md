@@ -16,6 +16,9 @@ the [manifest schema](../schema/prismal.schema.json), including the implicit cur
 file contents and injects the client before application scripts. A file's hash remains a route, not a second copy
 of its contents. URL sources are resolved at review time and are not rewritten or proxied.
 
+The CLI retains directory watchers across rebuilds and reconciles subscriptions when source dependencies change.
+In watch mode, the build summary is printed only after subscriptions are ready for the next edit.
+
 The generated [HTML template](../shell/lab.html) contains inline CSS, JSON data and one classic-script IIFE.
 `SHELL_ASSETS` in `lib/build.js` owns the JavaScript assembly order:
 
