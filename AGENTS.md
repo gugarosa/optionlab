@@ -13,9 +13,12 @@
 
 ## Commands
 
-`npm ci`, `npm test`, `npm run test:e2e`, `npm run check:example`,
+`npm ci`, `npm test`, `npm run check:types`, `npm run test:e2e`, `npm run check:example`,
 `npm run format:check`, `npm pack --dry-run`.
 Install test browsers with `npx playwright install chromium`.
+Type checking uses JSDoc and `--noEmit`; there is no compilation step.
+`OPTIONLAB_BROWSER=firefox` or `webkit` selects another test engine;
+`OPTIONLAB_CHANNEL=msedge` selects installed Edge. `UPDATE_SHOTS=1` refreshes README media.
 
 ## Rules
 

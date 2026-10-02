@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "optionlab choices",
+  "description": "Selections and notes exported from one optionlab review round.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "optionlab",
+    "title",
+    "round",
+    "exported",
+    "decisions",
+    "questions",
+    "words",
+    "elements",
+    "journeys",
+    "notes"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "optionlab": {
+      "const": 1
+    },
+    "title": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "exported": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/question"
+      }
+    },
+    "words": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/word"
+      }
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/element"
+      }
+    },
+    "journeys": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/journey"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "nullableString": {
+      "type": ["string", "null"]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "pick", "pickName", "liked", "note"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "pick": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "pickName": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "liked": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "answer", "note"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "answer": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "word": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "term", "choice", "note"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "term": {
+          "type": "string"
+        },
+        "choice": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "route", "verdict", "text", "note"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": ["string", "null"],
+          "enum": ["clear", "unclear", "change", null]
+        },
+        "text": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "group": {
+          "type": "string"
+        },
+        "what": {
+          "type": "string"
+        }
+      }
+    },
+    "journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["journey", "step", "title", "verdict", "note"],
+      "properties": {
+        "journey": {
+          "$ref": "#/$defs/id"
+        },
+        "step": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": ["string", "null"],
+          "enum": ["obvious", "unclear", "missing", null]
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

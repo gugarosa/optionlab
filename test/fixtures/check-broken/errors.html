@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Error sample</title>
+    <style>
+      body {
+        margin: 0;
+        font: 20px system-ui;
+      }
+      main {
+        padding: 40px;
+      }
+      html[data-ol-broken="a"] main {
+        background: #eef6ff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Deliberate errors</h1>
+      <p>The checker should keep checking later pages.</p>
+    </main>
+    <script>
+      console.error("fixture console error");
+      queueMicrotask(() => {
+        throw new Error("fixture page error");
+      });
+    </script>
+  </body>
+</html>

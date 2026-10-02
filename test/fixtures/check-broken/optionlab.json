@@ -1,0 +1,37 @@
+{
+  "title": "Faultline",
+  "round": 1,
+  "about": "A fictional collection of deliberately broken browser checks.",
+  "devices": { "laptop": [640, 480], "phone": [320, 480] },
+  "decisions": [
+    {
+      "id": "broken",
+      "title": "Broken samples",
+      "question": "Does each browser failure remain visible?",
+      "views": [
+        { "caption": "Same as Now", "file": "same.html" },
+        { "caption": "Missing focus", "file": "focus.html", "focus": ".missing-focus" },
+        { "caption": "Page errors", "file": "errors.html" },
+        { "caption": "No ready", "file": "no-ready.html" },
+        { "caption": "Overflow", "device": "phone", "file": "overflow.html" },
+        { "caption": "Empty", "file": "empty.html" }
+      ],
+      "options": [{ "id": "a", "name": "Alternate" }]
+    }
+  ],
+  "elements": [{ "name": "Absent control", "selector": ".never-registered" }],
+  "inspect": [{ "label": "Broken page", "file": "focus.html" }],
+  "journeys": [
+    {
+      "id": "missing-action",
+      "title": "Find an absent action",
+      "steps": [
+        {
+          "file": "focus.html",
+          "selector": ".missing-journey",
+          "title": "Use the absent action"
+        }
+      ]
+    }
+  ]
+}

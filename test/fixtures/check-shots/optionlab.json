@@ -1,0 +1,17 @@
+{
+  "title": "Prism",
+  "round": 1,
+  "devices": { "laptop": [640, 480], "phone": [320, 480] },
+  "decisions": [
+    {
+      "id": "color",
+      "title": "Sample color",
+      "question": "Which fictional color should lead?",
+      "views": [
+        { "caption": "Laptop", "file": "page.html", "focus": "main" },
+        { "caption": "Phone", "device": "phone", "file": "page.html", "focus": "main" }
+      ],
+      "options": [{ "id": "a", "name": "Blue" }]
+    }
+  ]
+}

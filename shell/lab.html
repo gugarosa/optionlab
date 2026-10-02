@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><!--OPTIONLAB_TITLE--> · optionlab</title>
+    <!--OPTIONLAB_STYLE-->
+  </head>
+  <body>
+    <a class="skip-link" href="#stage">Skip to review</a>
+    <header class="mobile-bar">
+      <button
+        type="button"
+        class="button"
+        data-action="rail"
+        aria-label="Toggle navigation"
+        aria-expanded="false"
+      ></button>
+      <strong id="mobile-title"></strong>
+      <button type="button" class="button" data-action="export">Export</button>
+    </header>
+    <aside class="rail" id="rail" aria-label="Round navigation"></aside>
+    <main class="stage" id="stage" tabindex="-1"></main>
+    <input type="file" id="import-file" accept=".json,application/json" hidden />
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <!--OPTIONLAB_DATA-->
+    <!--OPTIONLAB_SCRIPT-->
+  </body>
+</html>

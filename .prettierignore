@@ -1,5 +1,6 @@
 package-lock.json
 lab.html
+!shell/lab.html
 media/
 .impeccable/
 PRODUCT.md
