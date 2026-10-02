@@ -132,7 +132,7 @@ File and private-browsing storage vary, so export before closing or handing off.
 | B / F        | Beside Now / focus or full page                    |
 | I / [ / Esc  | Open or toggle Inspect / toggle navigation / close |
 
-Shortcuts pause while typing. Page hashes such as `#/d/header/b` preserve the current view on reload.
+Shortcuts apply outside preview frames and editable fields. Hashes such as `#/d/header/b` preserve the view on reload.
 
 ## Commands and API
 
