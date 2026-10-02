@@ -1,0 +1,9 @@
+node_modules/
+lab.html
+.DS_Store
+.impeccable/
+PRODUCT.md
+DESIGN.md
+test-results/
+playwright-report/
+*.tgz

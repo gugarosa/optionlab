@@ -1,0 +1,56 @@
+{
+  "name": "optionlab",
+  "version": "0.1.0",
+  "description": "A design lab for agent-proposed UI options: see them live in your real app, pick, and hand the choices back.",
+  "type": "module",
+  "bin": {
+    "optionlab": "bin/optionlab.js"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client/optionlab.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "shell",
+    "client",
+    "schema",
+    "skill"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:e2e": "node --test test/e2e/*.test.js",
+    "check:example": "node bin/optionlab.js check examples/lumen/optionlab.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "peerDependencies": {
+    "playwright": ">=1.45"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2",
+    "prettier": "^3.8.1"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gugarosa/optionlab.git"
+  },
+  "keywords": [
+    "design",
+    "ui",
+    "agents",
+    "prototyping",
+    "design-review",
+    "playwright"
+  ]
+}
