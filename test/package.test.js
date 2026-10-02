@@ -72,9 +72,9 @@ test("a packed install builds without dependencies and resolves optional checker
   await run(["build"]);
   assert.match(await readFile(join(project, "prismal/lab.html"), "utf8"), /prismal-data/);
   await run(["skill"]);
-  assert.match(
+  assert.equal(
     await readFile(join(project, ".github/skills/prismal/SKILL.md"), "utf8"),
-    /You propose. The user decides/,
+    await readFile(new URL("../skill/SKILL.md", import.meta.url), "utf8"),
   );
   await assert.rejects(
     run(["check"]),

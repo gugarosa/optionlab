@@ -1,19 +1,14 @@
 # Working on Prismal
 
-Read [CONVENTIONS.md](CONVENTIONS.md) before changing this repository. It is the single source of contributor rules,
-ownership boundaries, documentation style and the change workflow.
-
-Read the [README](README.md) for user-facing behavior and [architecture](docs/architecture.md) when changing the
-build, shared shell scope, frame protocol or persisted choices. The [agent skill](skill/SKILL.md) teaches consumers
-to run design rounds; it is not this repository's coding policy.
+Read [CONVENTIONS.md](CONVENTIONS.md) for policy and [README.md](README.md) for user behavior.
+Read [architecture](docs/architecture.md) before changing bundling, shared shell scope, frame messages or choices.
+The [agent skill](skill/SKILL.md) teaches consumers to run rounds; it is not contributor policy.
 
 ## Commands
 
-`npm run verify` checks code, documentation and Node contracts. `npm run verify:browser` checks browser workflows.
-Dependency and browser setup live in the [README](README.md#tests).
+Use focused `node --test` selections while editing, then `npm run verify`.
+Use `npm run verify:browser` for browser-affecting changes. Setup lives in the [README](README.md#tests).
+`npm run format` and `npm run lint:fix` modify files; verification commands do not apply source fixes.
 
-Use focused `node --test` selections while iterating. `npm run format` applies formatting; `npm run lint:fix`
-applies safe JavaScript lint fixes. Keep both separate from the read-only verification commands.
-
-`PRISMAL_BROWSER=firefox` or `webkit` selects another test engine; `PRISMAL_CHANNEL=msedge` selects installed Edge.
-`UPDATE_SHOTS=1 npm run test:e2e` refreshes the fictional README images. Keep generated labs out of git.
+`PRISMAL_BROWSER=firefox` or `webkit` selects another installed engine; `PRISMAL_CHANNEL=msedge` selects installed Edge.
+`UPDATE_SHOTS=1 npm run test:e2e` refreshes the fictional README images. Do not commit generated labs.
