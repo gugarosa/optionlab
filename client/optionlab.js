@@ -149,7 +149,9 @@
       try {
         document.querySelectorAll(entry.selector);
         const rule = registry.sheet.insertRule(`${entry.selector}{}`, registry.sheet.cssRules.length);
-        registry.sheet.cssRules[rule].style.setProperty("--ol-element", String(index), "important");
+        const inserted = registry.sheet.cssRules[rule];
+        if (inserted instanceof CSSStyleRule)
+          inserted.style.setProperty("--ol-element", String(index), "important");
       } catch (error) {
         post("error", { message: `Invalid element selector: ${message(error)}` });
       }

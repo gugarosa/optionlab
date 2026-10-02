@@ -5,16 +5,12 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { after, before, test } from "node:test";
-import { chromium, firefox, webkit } from "playwright";
+import { clickPreview, launchBrowser } from "./browser.js";
 import { build } from "../../lib/build.js";
 
 let browser, directory, lab;
 before(async () => {
-  const engine = { chromium, firefox, webkit }[process.env.OPTIONLAB_BROWSER || "chromium"];
-  assert.ok(engine, "Unknown OPTIONLAB_BROWSER");
-  browser = await engine.launch(
-    process.env.OPTIONLAB_CHANNEL ? { channel: process.env.OPTIONLAB_CHANNEL } : {},
-  );
+  browser = await launchBrowser();
   directory = await mkdtemp(join(tmpdir(), "optionlab-e2e-"));
   const result = await build(resolve("examples/lumen/optionlab.json"), {
     output: join(directory, "lab.html"),
@@ -125,6 +121,20 @@ test("offline decisions: real variants, keys, comparison, notes, export, import 
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   await page.locator(".mobile-bar [data-action=rail]").click();
   assert.equal(await page.locator(".mobile-bar [data-action=rail]").getAttribute("aria-expanded"), "true");
+  await page.goto(`${lab}#/d/hero/e`);
+  await page.locator('#tab-e[aria-selected="true"]').waitFor();
+  assert.equal(
+    await page.locator("#tab-e").evaluate((element) => {
+      const tab = element.getBoundingClientRect(),
+        strip = element.parentElement.getBoundingClientRect();
+      return tab.left >= strip.left - 1 && tab.right <= strip.right + 1;
+    }),
+    true,
+  );
+  await page.locator(".skip-link").focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.locator("#stage").evaluate((element) => element === document.activeElement), true);
+  assert.match(page.url(), /\/hero\/e$/);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -160,7 +170,7 @@ test("the first application script sees choices, state and its srcdoc hash route
     state: { menu: "open" },
     route: "#/pricing",
   });
-  await frame.getByRole("link", { name: "Next route" }).click();
+  await clickPreview(page, page.locator(".frame-card iframe"), "a");
   await frame.waitForFunction(() => location.hash === "#/next");
   assert.equal(await frame.evaluate(() => optionlab.choice("hero")), "a");
   assert.equal(await page.locator("h1").textContent(), "Hero");

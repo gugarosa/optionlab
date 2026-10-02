@@ -6,7 +6,7 @@ let loadingFrames = 0;
 const frameObserver = new IntersectionObserver(
   (entries) => {
     for (const entry of entries) {
-      const rec = frameRecords.get(entry.target.dataset.key);
+      const rec = frameRecords.get(entry.target.getAttribute("data-key"));
       if (rec && entry.isIntersecting) rec.visible = true;
     }
     pumpFrames();
@@ -15,7 +15,7 @@ const frameObserver = new IntersectionObserver(
 );
 const frameResize = new ResizeObserver((entries) => {
   for (const entry of entries) {
-    const rec = frameRecords.get(entry.target.dataset.key);
+    const rec = frameRecords.get(entry.target.getAttribute("data-key"));
     if (rec) layoutFrame(rec.active || rec.pending);
   }
 });

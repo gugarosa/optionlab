@@ -16,8 +16,10 @@ function navigate() {
           option: "now",
         };
   render();
-  if (focusTab && current.page === "d")
-    stage.querySelector('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true });
+  if (focusTab && current.page === "d") {
+    const tab = stage.querySelector('[role="tab"][aria-selected="true"]');
+    if (tab instanceof HTMLElement) tab.focus({ preventScroll: true });
+  }
   if (previous !== current.page + current.id) window.scrollTo(0, 0);
   document.body.classList.remove("menu-open");
   updateMenuState();
@@ -109,11 +111,17 @@ function act(action, target) {
     else beside = !beside;
     if (action === "pick" || action === "like") save();
     render();
-    stage.querySelector(`[data-action="${action}"]`)?.focus({ preventScroll: true });
+    const control = stage.querySelector(`[data-action="${action}"]`);
+    if (control instanceof HTMLElement) control.focus({ preventScroll: true });
   }
 }
 document.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;
+  if (event.target.closest(".skip-link")) {
+    event.preventDefault();
+    stage.focus();
+    return;
+  }
   const target = event.target.closest("[data-action]");
   if (target instanceof HTMLElement) act(target.dataset.action, target);
 });
@@ -157,6 +165,7 @@ document.addEventListener("change", (event) => {
 });
 document.getElementById("import-file").addEventListener("change", async (event) => {
   const input = event.target;
+  if (!(input instanceof HTMLInputElement)) return;
   const file = input.files?.[0];
   if (!file) return;
   try {

@@ -5,12 +5,12 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { after, before, test } from "node:test";
-import { chromium, firefox, webkit } from "playwright";
+import { launchBrowser } from "./browser.js";
 import { build } from "../../lib/build.js";
 
 let browser, directory, lab;
 before(async () => {
-  browser = await { chromium, firefox, webkit }[process.env.OPTIONLAB_BROWSER || "chromium"].launch();
+  browser = await launchBrowser();
   directory = await mkdtemp(join(tmpdir(), "optionlab-review-"));
   const result = await build(resolve("examples/lumen/optionlab.json"), {
     output: join(directory, "lab.html"),
@@ -65,13 +65,11 @@ test("questions, words and notes persist, export, import and reset together", as
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   assert.equal(await page.getByLabel("General notes").inputValue(), "");
   assert.equal(await page.getByRole("progressbar", { name: "Words reviewed" }).getAttribute("value"), "0");
-  await page
-    .locator("#import-file")
-    .setInputFiles({
-      name: "other-round.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify({ ...exported, title: "Another round", round: 2 })),
-    });
+  await page.locator("#import-file").setInputFiles({
+    name: "other-round.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({ ...exported, title: "Another round", round: 2 })),
+  });
   await page.waitForFunction(() => document.getElementById("toast").textContent.includes("Another round"));
   assert.equal(await page.getByLabel("General notes").inputValue(), notes);
   await page.locator('.rail a[href="#/words"]').click();

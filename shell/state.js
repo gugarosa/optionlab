@@ -77,52 +77,49 @@ function parseChoices(raw) {
     raw.round < 1
   )
     throw new Error("Not an optionlab choices file.");
-  const list = (key) => {
-    if (!Array.isArray(raw[key]) || raw[key].some((v) => !object(v)))
-      throw new Error(`Choices ${key} must be a list.`);
-    return raw[key];
-  };
   const text = (value) => value === null || typeof value === "string";
-  const note = (entry) => typeof entry.note === "string";
   if (typeof raw.notes !== "string") throw new Error("Choices notes must be text.");
-  for (const d of list("decisions")) {
-    if (
-      typeof d.id !== "string" ||
-      typeof d.title !== "string" ||
-      !text(d.pick) ||
-      !text(d.pickName) ||
-      !note(d) ||
-      !Array.isArray(d.liked) ||
-      d.liked.some((v) => typeof v !== "string")
-    )
-      throw new Error("Invalid decision choices.");
-  }
-  for (const q of list("questions"))
-    if (typeof q.id !== "string" || !text(q.answer) || !note(q)) throw new Error("Invalid question choices.");
-  for (const w of list("words"))
-    if (typeof w.id !== "string" || typeof w.term !== "string" || !text(w.choice) || !note(w))
-      throw new Error("Invalid word choices.");
-  for (const e of list("elements")) {
-    if (
-      typeof e.name !== "string" ||
-      typeof e.route !== "string" ||
-      typeof e.text !== "string" ||
-      !note(e) ||
-      ![null, "clear", "unclear", "change"].includes(e.verdict) ||
-      (e.index !== undefined && (!Number.isInteger(e.index) || e.index < 0))
-    )
-      throw new Error("Invalid element choices.");
-  }
-  for (const j of list("journeys")) {
-    if (
-      typeof j.journey !== "string" ||
-      typeof j.title !== "string" ||
-      !Number.isInteger(j.step) ||
-      j.step < 1 ||
-      !note(j) ||
-      ![null, "obvious", "unclear", "missing"].includes(j.verdict)
-    )
-      throw new Error("Invalid journey choices.");
+  const fields = {
+    decisions: "id title note",
+    questions: "id note",
+    words: "id term note",
+    elements: "name route text note",
+    journeys: "journey title note",
+  };
+  const valid = {
+    decisions: (v) =>
+      text(v.pick) &&
+      text(v.pickName) &&
+      Array.isArray(v.liked) &&
+      v.liked.every((id) => typeof id === "string"),
+    questions: (v) => text(v.answer),
+    words: (v) => text(v.choice),
+    elements: (v) =>
+      [null, "clear", "unclear", "change"].includes(v.verdict) &&
+      (v.index === undefined || (Number.isInteger(v.index) && v.index >= 0)),
+    journeys: (v) =>
+      [null, "obvious", "unclear", "missing"].includes(v.verdict) && Number.isInteger(v.step) && v.step > 0,
+  };
+  for (const [key, names] of Object.entries(fields)) {
+    if (!Array.isArray(raw[key])) throw new Error(`Choices ${key} must be a list.`);
+    const seen = new Set();
+    for (const entry of raw[key]) {
+      if (
+        !object(entry) ||
+        names.split(" ").some((name) => typeof entry[name] !== "string") ||
+        !valid[key](entry)
+      )
+        throw new Error(`Invalid ${key} choices.`);
+      const identity = JSON.stringify(
+        key === "elements"
+          ? [entry.name, entry.route, entry.index || 0]
+          : key === "journeys"
+            ? [entry.journey, entry.step]
+            : entry.id,
+      );
+      if (seen.has(identity)) throw new Error(`Duplicate ${key} choices.`);
+      seen.add(identity);
+    }
   }
   const next = freshChoices();
   for (const d of next.decisions) {

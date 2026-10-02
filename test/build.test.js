@@ -1,11 +1,12 @@
 // @ts-check
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { build } from "../lib/build.js";
 
-const repository = resolve(new URL("..", import.meta.url).pathname);
+const repository = fileURLToPath(new URL("..", import.meta.url));
 
 /** @param {import("node:test").TestContext} t */
 async function workspace(t) {
@@ -137,6 +138,9 @@ test("build creates explicit output directories and protects every input", async
   await assert.rejects(build(manifestPath, { output: source }), {
     message: `Refusing to overwrite build input ${source}`,
   });
+  const alias = join(root, "source-alias.html");
+  await symlink(source, alias);
+  await assert.rejects(build(manifestPath, { output: alias }), /Refusing to overwrite build input/);
   const output = join(root, "nested", "review", "lab.html");
   const result = await build(manifestPath, { output });
   assert.equal(result.output, output);

@@ -2,10 +2,11 @@
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { loadManifest, normalizeManifest } from "../lib/manifest.js";
 
-const repository = resolve(new URL("..", import.meta.url).pathname);
+const repository = fileURLToPath(new URL("..", import.meta.url));
 
 function minimalManifest() {
   return {

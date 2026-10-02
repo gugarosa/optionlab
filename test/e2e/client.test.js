@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { after, before, test } from "node:test";
-import { chromium, firefox, webkit } from "playwright";
+import { launchBrowser } from "./browser.js";
 import { build } from "../../lib/build.js";
 
 let browser, server, origin;
@@ -25,7 +25,7 @@ before(async () => {
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   origin = `http://127.0.0.1:${server.address().port}`;
-  browser = await { chromium, firefox, webkit }[process.env.OPTIONLAB_BROWSER || "chromium"].launch();
+  browser = await launchBrowser();
 });
 after(async () => {
   await browser?.close();

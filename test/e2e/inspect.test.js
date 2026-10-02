@@ -5,12 +5,12 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { after, before, test } from "node:test";
-import { chromium, firefox, webkit } from "playwright";
+import { clickPreview, launchBrowser } from "./browser.js";
 import { build } from "../../lib/build.js";
 
 let browser, directory, lab;
 before(async () => {
-  browser = await { chromium, firefox, webkit }[process.env.OPTIONLAB_BROWSER || "chromium"].launch();
+  browser = await launchBrowser();
   directory = await mkdtemp(join(tmpdir(), "optionlab-inspect-"));
   const result = await build(resolve("examples/lumen/optionlab.json"), {
     output: join(directory, "lab.html"),
@@ -41,10 +41,10 @@ test("Inspect selects named instances, blocks page actions, and exports element 
   await page.locator(".inventory [data-name='Plan card']").waitFor();
   assert.equal(await page.getByLabel("Inspect route").inputValue(), "1");
   const frame = page.locator(".frame-card iframe").contentFrame();
-  await frame.locator(".plan h2").first().click();
+  await clickPreview(page, page.locator(".frame-card iframe"), ".plan h2");
   await page.waitForFunction(() => document.querySelector(".selection-head h2")?.textContent === "Plan card");
   assert.match(await page.locator(".selected-text").textContent(), /Free/);
-  await frame.locator(".start-trial").first().click();
+  await clickPreview(page, page.locator(".frame-card iframe"), ".start-trial");
   assert.equal(await frame.locator(".feedback").textContent(), "");
   await page.getByRole("button", { name: "Change", exact: true }).click();
   await page.locator('textarea[data-note="elements"]').fill("Make the price easier to scan.");
@@ -109,19 +109,20 @@ test("specificity, explicit names and accessible fallback names work without int
   const page = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
   await page.goto(`${pathToFileURL(result.output).href}#/inspect`);
   await ready(page, page.locator(".frame-card"));
+  await page.locator(".inventory [data-name='Specific']").waitFor();
   const frame = page.locator(".frame-card iframe").contentFrame();
-  await frame.locator("#actual").click();
+  await clickPreview(page, page.locator(".frame-card iframe"), "#actual");
   await page.waitForFunction(() => document.querySelector(".selection-head h2")?.textContent === "Specific");
   assert.deepEqual(await frame.locator("body").evaluate(() => window.counts), {
     pointerdown: 0,
     mousedown: 0,
     click: 0,
   });
-  await frame.locator("#plain").click();
+  await clickPreview(page, page.locator(".frame-card iframe"), "#plain");
   await page.waitForFunction(
     () => document.querySelector(".selection-head h2")?.textContent === 'Button "Continue"',
   );
-  await frame.locator("[data-ol-name='Helper text']").click();
+  await clickPreview(page, page.locator(".frame-card iframe"), "[data-ol-name='Helper text']");
   await page.waitForFunction(
     () => document.querySelector(".selection-head h2")?.textContent === "Helper text",
   );
@@ -129,7 +130,7 @@ test("specificity, explicit names and accessible fallback names work without int
   const instance = await frame.locator("body").evaluate(() => window.instance);
   await page.getByRole("button", { name: "Inspect on", exact: true }).click();
   await frame.locator("[data-ol-ring=selection]").waitFor({ state: "hidden" });
-  await frame.locator("#actual").click();
+  await clickPreview(page, page.locator(".frame-card iframe"), "#actual");
   assert.deepEqual(await frame.locator("body").evaluate(() => window.counts), {
     pointerdown: 1,
     mousedown: 1,

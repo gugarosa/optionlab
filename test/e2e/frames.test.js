@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { after, before, test } from "node:test";
-import { chromium, firefox, webkit } from "playwright";
+import { launchBrowser } from "./browser.js";
 import { build } from "../../lib/build.js";
 
 let browser, server, origin, directory;
@@ -16,7 +16,7 @@ let inFlight = 0,
 before(async () => {
   const client = await readFile(new URL("../../client/optionlab.js", import.meta.url), "utf8");
   const html =
-    '<!doctype html><script src="/client"></script><style>body{margin:0}.hero{padding:16px}</style><main class="hero"><h1></h1></main><script>document.querySelector("h1").textContent=optionlab.choice("hero")</script>';
+    '<!doctype html><script src="/client"></script><style>body{margin:0}.hero{padding:16px}</style><main class="hero"><h1></h1></main><script>document.title=document.querySelector("h1").textContent=optionlab.choice("hero")</script>';
   server = createServer((request, response) => {
     if (request.url === "/client") {
       response.writeHead(200, { "Content-Type": "text/javascript" });
@@ -50,7 +50,7 @@ before(async () => {
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   origin = `http://127.0.0.1:${server.address().port}`;
   directory = await mkdtemp(join(tmpdir(), "optionlab-frames-"));
-  browser = await { chromium, firefox, webkit }[process.env.OPTIONLAB_BROWSER || "chromium"].launch();
+  browser = await launchBrowser();
 });
 after(async () => {
   await browser?.close();
@@ -86,6 +86,16 @@ async function openLab(endpoint, count) {
   );
   const result = await build(path, { output: join(directory, `${endpoint}.html`) });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1200 } });
+  await page.addInitScript(() => {
+    window.readyTitles = new Map();
+    addEventListener("message", (event) => {
+      const frame = [...document.querySelectorAll("iframe")].find(
+        (entry) => entry.contentWindow === event.source,
+      );
+      if (frame && event.data?.ol === 1 && event.data.type === "ready")
+        window.readyTitles.set(frame, event.data.title);
+    });
+  });
   await page.goto(`${pathToFileURL(result.output).href}#/d/hero/now`);
   await ready(page, count);
   return page;
@@ -113,10 +123,8 @@ test("lazy frames load two at a time, survive supersession, and reject foreign m
     await page.locator(`#tab-${id}[aria-selected=true]`).waitFor();
   }
   await ready(page, 4);
-  const values = await Promise.all(
-    Array.from({ length: 4 }, (_, index) =>
-      page.locator("iframe").nth(index).contentFrame().locator("h1").textContent(),
-    ),
+  const values = await page.evaluate(() =>
+    [...document.querySelectorAll("iframe")].map((frame) => window.readyTitles.get(frame)),
   );
   assert.deepEqual(values, ["a", "a", "a", "a"]);
   await page.evaluate(() => window.postMessage({ ol: 1, type: "error", message: "Not an owned frame" }, "*"));
@@ -138,7 +146,7 @@ test("old frames survive until the 3s swap; disconnected pages get the 8s recove
   const swapped = Date.now() - started;
   assert.ok(swapped >= 2900 && swapped < 4500, `Swap happened at ${swapped}ms`);
   await ready(page, 1);
-  assert.equal(await page.frames()[1].locator("h1").textContent(), "a");
+  assert.equal(await page.evaluate(() => window.readyTitles.get(document.querySelector("iframe"))), "a");
   const disconnected = Date.now();
   await page.locator("[data-action=option][data-option=b]").click();
   await page.locator(".frame-error").waitFor();

@@ -298,6 +298,15 @@ function render() {
   patchChildren(stage, next.content);
   syncFrames();
   renderRail();
+  const activeTab = stage.querySelector(".option-tab.active");
+  if (activeTab instanceof HTMLElement) {
+    const tabs = activeTab.parentElement;
+    if (
+      activeTab.offsetLeft < tabs.scrollLeft ||
+      activeTab.offsetLeft + activeTab.offsetWidth > tabs.scrollLeft + tabs.clientWidth
+    )
+      tabs.scrollLeft = activeTab.offsetLeft - (tabs.clientWidth - activeTab.offsetWidth) / 2;
+  }
   for (const textarea of stage.querySelectorAll("textarea")) growNote(textarea);
 }
 function patchChildren(parent, next) {
@@ -329,6 +338,8 @@ function patchChildren(parent, next) {
           (cursor instanceof HTMLInputElement ||
             cursor instanceof HTMLTextAreaElement ||
             cursor instanceof HTMLSelectElement) &&
+          "value" in fresh &&
+          typeof fresh.value === "string" &&
           cursor.value !== fresh.value
         )
           cursor.value = fresh.value;

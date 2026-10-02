@@ -4,12 +4,17 @@ import { parseArgs } from "node:util";
 import { spawn } from "node:child_process";
 import { watch } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { build } from "../lib/build.js";
+import { init } from "../lib/init.js";
+import { skill } from "../lib/skill.js";
 
 const help = `optionlab - live design options, one choices file
 
+  optionlab init [dir]
   optionlab build [manifest] [-o file] [--watch] [--open]
   optionlab check [manifest] [--shots dir]
+  optionlab skill [dir]
   optionlab --help
   optionlab --version`;
 async function main() {
@@ -32,23 +37,33 @@ async function main() {
     console.log(help);
     return;
   }
-  const [command, manifestPath] = positionals;
-  if (!["build", "check"].includes(command))
+  const [command, input] = positionals;
+  if (!["init", "build", "check", "skill"].includes(command))
     throw new Error(`Unknown command "${command}". Run optionlab --help.`);
   if (positionals.length > 2) throw new Error("Too many arguments.");
-  const allowed = command === "build" ? ["output", "watch", "open"] : ["shots"];
+  const allowed = { build: ["output", "watch", "open"], check: ["shots"], init: [], skill: [] }[command];
   for (const flag of Object.keys(values)) {
     if (!["help", "version", ...allowed].includes(flag))
       throw new Error(`--${flag} is not available for ${command}.`);
   }
+  if (command === "init") {
+    console.log(
+      `Created ${await init(input)}\nCopy optionlab/client into your app's public directory and include <script src="/optionlab.js"></script> before app scripts, in development only.\nImplement the starter variants, then build and check the round.`,
+    );
+    return;
+  }
+  if (command === "skill") {
+    console.log(`Installed ${await skill(input)}`);
+    return;
+  }
   if (command === "check") {
     const { check } = await import("../lib/check.js");
-    const result = await check(manifestPath, { shots: values.shots });
+    const result = await check(input, { shots: values.shots });
     process.exitCode = result.failures ? 1 : 0;
     return;
   }
   async function rebuild() {
-    const result = await build(manifestPath, { output: values.output });
+    const result = await build(input, { output: values.output });
     const { decisions, options, frames, bytes } = result.stats;
     const mark = process.stdout.isTTY ? "\u001b[32m\u2713\u001b[0m " : "";
     console.log(
@@ -62,7 +77,7 @@ async function main() {
       process.platform === "darwin"
         ? ["open", [result.output]]
         : process.platform === "win32"
-          ? ["explorer.exe", [result.output]]
+          ? ["rundll32.exe", ["url.dll,FileProtocolHandler", pathToFileURL(result.output).href]]
           : ["xdg-open", [result.output]];
     await new Promise((done, fail) => {
       const child = spawn(program, args, { stdio: "ignore" });

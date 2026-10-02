@@ -72,21 +72,23 @@ svg {
 }
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
-h1 {
+:is(h1, h2, h3, strong) {
   color: var(--gray-900);
-  font-size: 24px;
   font-weight: 600;
-  line-height: 32px;
-  letter-spacing: -0.02em;
 }
-h2 {
-  color: var(--gray-900);
+h2,
+h3 {
   font-size: 16px;
   line-height: 24px;
-  font-weight: 600;
+}
+h1 {
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.02em;
 }
 code,
 kbd {
@@ -119,8 +121,49 @@ input {
 [hidden] {
   display: none !important;
 }
-.muted {
+.muted,
+.tab-kind,
+.row-meta,
+.selection-meta,
+.instance-controls > span {
   color: var(--gray-500);
+}
+:is(
+  .rail-brand,
+  .nav-link,
+  .shortcuts dl > div,
+  .other-word,
+  .frame-caption,
+  .inspect-tools,
+  .instance-controls,
+  .selection-head,
+  .step-head
+) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+:is(.page-tools, .option-tabs, .decision-actions, .view-tools, .journey-tabs) {
+  display: flex;
+  gap: 8px;
+}
+:is(.frame-card, .review-card) {
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: white;
+}
+:is(.frame-card, .frame-caption > span, .frame-caption code, .option-tabs, .view-unit, .view-pair) {
+  min-width: 0;
+}
+:is(.views, .view-pair.paired, .review-grid, .inspect-layout, .journey-steps) {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+}
+:is(.review-card, .journey-step) .note-field {
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
 }
 .button {
   display: inline-flex;
@@ -184,9 +227,6 @@ input {
 }
 .rail-brand {
   padding: 28px 24px 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 .brand-mark {
   color: var(--brand-700);
@@ -197,9 +237,7 @@ input {
 }
 .rail-brand strong {
   display: block;
-  color: var(--gray-900);
   font-size: 18px;
-  font-weight: 600;
   overflow-wrap: anywhere;
 }
 .rail-brand div > span {
@@ -251,9 +289,6 @@ progress::-moz-progress-bar {
 }
 .nav-link {
   min-height: 40px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
   border-radius: 8px;
   padding: 9px 12px;
   text-decoration: none;
@@ -343,10 +378,6 @@ progress::-moz-progress-bar {
   color: var(--gray-600);
   max-width: 70ch;
 }
-.page-tools {
-  display: flex;
-  gap: 8px;
-}
 .start-guide {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -381,14 +412,9 @@ progress::-moz-progress-bar {
 .decision-row:hover strong {
   color: var(--brand-700);
 }
-.decision-row strong {
-  color: var(--gray-900);
-  font-weight: 600;
-}
 .decision-row span > span {
   display: block;
   margin-top: 4px;
-  color: var(--gray-500);
 }
 .decision-status {
   width: 32px;
@@ -416,9 +442,6 @@ progress::-moz-progress-bar {
   margin-top: 20px;
 }
 .shortcuts dl > div {
-  display: flex;
-  gap: 12px;
-  align-items: center;
   font-size: 12px;
 }
 .shortcuts dt {
@@ -431,7 +454,6 @@ progress::-moz-progress-bar {
 }
 .option-bar {
   display: flex;
-  align-items: stretch;
   gap: 16px;
   position: sticky;
   top: 0;
@@ -440,10 +462,7 @@ progress::-moz-progress-bar {
   background: var(--gray-50);
 }
 .option-tabs {
-  display: flex;
-  gap: 8px;
   flex: 1;
-  min-width: 0;
   overflow-x: auto;
   padding: 3px;
   margin: -3px;
@@ -456,7 +475,6 @@ progress::-moz-progress-bar {
   background: white;
   text-align: left;
   padding: 12px;
-  color: var(--gray-700);
 }
 .option-tab:hover {
   border-color: var(--gray-300);
@@ -480,7 +498,6 @@ progress::-moz-progress-bar {
   padding: 2px 5px;
   border-radius: 5px;
   background: var(--gray-100);
-  color: var(--gray-700);
   font-size: 11px;
   font-weight: 600;
 }
@@ -490,7 +507,6 @@ progress::-moz-progress-bar {
 }
 .tab-kind {
   font-size: 10px;
-  color: var(--gray-500);
 }
 .tab-marks {
   margin-left: auto;
@@ -505,12 +521,9 @@ progress::-moz-progress-bar {
 .option-tab strong {
   display: block;
   font-size: 12px;
-  font-weight: 600;
   line-height: 18px;
 }
 .decision-actions {
-  display: flex;
-  gap: 8px;
   align-self: center;
 }
 .option-context {
@@ -521,7 +534,6 @@ progress::-moz-progress-bar {
   padding: 12px 0 20px;
 }
 .option-idea {
-  color: var(--gray-700);
   max-width: 70ch;
 }
 .option-reasons {
@@ -542,8 +554,6 @@ progress::-moz-progress-bar {
   height: 14px;
 }
 .view-tools {
-  display: flex;
-  gap: 8px;
   flex-shrink: 0;
 }
 .note-field {
@@ -570,37 +580,21 @@ textarea {
   background: white;
 }
 .views {
-  display: grid;
   grid-template-columns: minmax(0, 1fr) 288px;
-  align-items: start;
-  gap: 20px;
 }
 .views.single,
 .views.comparing {
   grid-template-columns: minmax(0, 1fr);
 }
-.view-unit,
-.view-pair {
-  min-width: 0;
-}
 .view-pair.paired {
-  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
 }
 .frame-card {
-  border: 1px solid var(--gray-200);
-  border-radius: 12px;
   overflow: hidden;
-  background: white;
-  min-width: 0;
 }
 .frame-caption {
   height: 32px;
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
   padding: 0 12px;
   border-bottom: 1px solid var(--gray-200);
   font-size: 12px;
@@ -712,22 +706,10 @@ textarea {
   margin-bottom: 16px;
 }
 .review-grid {
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
-  gap: 20px;
 }
 .review-card {
   padding: 24px;
-  border: 1px solid var(--gray-200);
-  border-radius: 12px;
-  background: white;
-}
-.review-card h3 {
-  margin: 0;
-  color: var(--gray-900);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 24px;
 }
 .review-card > p {
   margin-top: 8px;
@@ -746,11 +728,6 @@ textarea {
   font-size: 13px;
   box-shadow: none;
 }
-.review-card .note-field {
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 0;
-}
 .review-card .note-field > span {
   padding: 0;
 }
@@ -764,9 +741,6 @@ textarea {
   font-size: 12px;
 }
 .other-word {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-bottom: 20px;
   font-size: 12px;
   color: var(--gray-600);
@@ -793,14 +767,6 @@ select {
   line-height: 24px;
   padding: 20px;
 }
-.inspect-tools,
-.instance-controls,
-.selection-head,
-.step-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 .inspect-tools {
   flex-wrap: wrap;
   margin-bottom: 24px;
@@ -812,10 +778,7 @@ select {
   font-size: 12px;
 }
 .inspect-layout {
-  display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 20px;
-  align-items: start;
 }
 .inspector-panel {
   position: sticky;
@@ -829,7 +792,6 @@ select {
 }
 .selection-meta {
   font-size: 12px;
-  color: var(--gray-500);
   overflow-wrap: anywhere;
 }
 .selected-text {
@@ -845,7 +807,6 @@ select {
   margin-top: 20px;
 }
 .instance-controls > span {
-  color: var(--gray-500);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -872,8 +833,6 @@ select {
   font-weight: 400;
 }
 .journey-tabs {
-  display: flex;
-  gap: 8px;
   margin-bottom: 28px;
 }
 .journey-tabs a {
@@ -885,10 +844,8 @@ select {
   background: var(--brand-50);
 }
 .journey-steps {
-  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
-  align-items: start;
 }
 .step-head {
   align-items: start;
@@ -901,11 +858,6 @@ select {
 }
 .step-ask {
   margin-top: 20px;
-}
-.journey-step .note-field {
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 0;
 }
 .skip-link {
   position: fixed;

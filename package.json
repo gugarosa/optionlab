@@ -25,6 +25,7 @@
     "test": "node --test test/*.test.js",
     "test:e2e": "node --test test/e2e/*.test.js",
     "check:example": "node bin/optionlab.js check examples/lumen/optionlab.json",
+    "check:types": "tsc --allowJs --checkJs --noEmit --target es2022 --lib es2022,dom,dom.iterable --module nodenext --moduleResolution nodenext --moduleDetection legacy --skipLibCheck bin/*.js lib/*.js client/*.js shell/*.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -37,8 +38,10 @@
     }
   },
   "devDependencies": {
+    "@types/node": "^20.19.0",
     "playwright": "^1.58.2",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
   },
   "license": "MIT",
   "repository": {

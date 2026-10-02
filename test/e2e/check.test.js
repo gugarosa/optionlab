@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
+import { createServer } from "node:http";
 import { promisify } from "node:util";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -92,4 +93,45 @@ test("the CLI exits 1 for a broken option rather than reporting success", async 
     promisify(execFile)(process.execPath, [join(repository, "bin/optionlab.js"), "check"], { cwd: root }),
     (error) => error.code === 1 && /byte-identical to Now/.test(error.stdout),
   );
+});
+test("failed HTTP resources and disconnected requests fail the round", async (t) => {
+  const root = await mkdtemp(join(repository, ".optionlab-network-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const server = createServer((request, response) => {
+    if (request.url === "/disconnected") {
+      request.socket.destroy();
+      return;
+    }
+    response.writeHead(404);
+    response.end("Missing fictional asset");
+  });
+  await new Promise((done) => server.listen(0, "127.0.0.1", done));
+  t.after(() => new Promise((done) => server.close(done)));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  await writeFile(
+    join(root, "page.html"),
+    `<!doctype html><style>html[data-ol-page=a]body{background:#ddd}</style><h1>Broken assets</h1><img src="${base}/missing"><img src="${base}/disconnected">`,
+  );
+  await writeFile(
+    join(root, "optionlab.json"),
+    JSON.stringify({
+      title: "Network",
+      round: 1,
+      decisions: [
+        {
+          id: "page",
+          title: "Page",
+          question: "Loads?",
+          views: [{ caption: "Laptop", file: "page.html" }],
+          options: [{ id: "a", name: "A" }],
+        },
+      ],
+    }),
+  );
+  const report = await check(join(root, "optionlab.json"), { log: () => {} });
+  const messages = report.problems.map((entry) => entry.message).join("\n");
+  assert.ok(report.failures > 0);
+  assert.match(messages, /HTTP resource failed: 404/);
+  assert.match(messages, /Network request failed:.*disconnected/);
+  assert.match(messages, /images failed to load/);
 });
